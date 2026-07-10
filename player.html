@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -223,20 +224,7 @@ function gv(row,i){if(!row.c||row.c[i]==null)return null;const v=row.c[i];return
 function gs(row,i){const v=gv(row,i);return v!=null?String(v):''}
 function gn(row,i){const v=gv(row,i);if(v==null)return null;const n=parseFloat(v);return isNaN(n)?null:n;}
 
-// Build column index map from gviz cols
-function colMap(tbl){
-  const m={};
-  (tbl.cols||[]).forEach((c,i)=>{if(c.label)m[c.label.toLowerCase().trim()]=i;});
-  return m;
-}
-function cv(m,row,...labels){
-  for(const l of labels){
-    const i=m[l.toLowerCase().trim()];
-    if(i!=null){const v=gv(row,i);if(v!=null)return v;}
-  }
-  return null;
-}
-function cn(m,row,...labels){const v=cv(m,row,...labels);if(v==null)return null;const n=parseFloat(v);return isNaN(n)?null:n;}
+
 
 // ── SVG Gauge ──────────────────────────────────────────────────────────
 function gauge(value,max,color,displayVal,unit,size=100){
@@ -614,63 +602,56 @@ function renderSession(d,prevTips){
 }
 
 // ── Parse PM Session Data ──────────────────────────────────────────────
+// Sheet structure (column indices, 0-based):
+// 0=Session  1=Date  2=PlayerID  3=Name  4=Position  5=Team
+// 6=PosChange  7=InjuryFlag  8=PrimaryPos
+// 9=Touches  10=TPM  11=Left%  12=Right%  13=Bilateral  14=OneTouch%  15=ShortAvg  16=LongAvg
+// 17=CtrlRel  18=MaxRV  19=Z1  20=Z2  21=Z3  22=Z4  23=Z5  24=Z6
+// 25=Drift  26=Rel1H  27=Rel2H  28=CrossFoot  29=COD  30=DirAsym  31=TactEco
+// 32=TotalDist  33=TopSpeed  34=WR  35=HSC  36=Sprints
+// 37=StrideAsym  38=GaitFlag  39=GaitCtx
+// 40=BC  41=Pass  42=Recv  43=Drib  44=Finish  45=BothFeet  46=TAVG
+// 47=Scan  48=DecSpeed  49=Spatial  50=Pos  51=IAVG
+// 52=Speed  53=Agility  54=Endurance  55=Recovery  56=SAVG
+// 57=TIPS  58=SessionNote  59=DevPriority
 function parsePM(tbl){
-  const m=colMap(tbl);
-  return (tbl.rows||[]).filter(r=>r&&r.c&&cv(m,r,'player id','playerid')).map(r=>{
-    const pid=String(cv(m,r,'player id','playerid')||'').toUpperCase().trim();
-    if(!pid)return null;
-    return{
-      pid,
-      session:gs(r,m['session']??0),
-      date:gs(r,m['session date']??1),
-      name:gs(r,m['player name']??3),
-      position:gs(r,m['position played']??4),
-      team:gs(r,m['team']??5),
-      posChange:gs(r,m['position change']??6),
-      injuryFlag:gs(r,m['injury/pain flag']??7),
-      touches:cn(m,r,'touches'),
-      tpm:cn(m,r,'touches/min'),
-      leftPct:cn(m,r,'left %'),
-      rightPct:cn(m,r,'right %'),
-      bilateral:cn(m,r,'bilateral'),
-      otp:cn(m,r,'one-touch %'),
-      shortAvg:cn(m,r,'short avg (s)'),
-      longAvg:cn(m,r,'long avg (s)'),
-      ctrlRel:cn(m,r,'ctrl release %'),
-      maxRV:cn(m,r,'max rv (km/h)'),
-      rvZ1:cn(m,r,'rv z1'),rvZ2:cn(m,r,'rv z2'),rvZ3:cn(m,r,'rv z3'),
-      rvZ4:cn(m,r,'rv z4'),rvZ5:cn(m,r,'rv z5'),rvZ6:cn(m,r,'rv z6'),
-      drift:cn(m,r,'drift ratio'),
-      rel1h:cn(m,r,'release 1h'),
-      rel2h:cn(m,r,'release 2h'),
-      crossFoot:cn(m,r,'cross-foot %'),
-      codIntel:cn(m,r,'cod intel %'),
-      dirAsym:cn(m,r,'dir asym %'),
-      tactEco:cn(m,r,'tact eco (m)'),
-      totalDist:cn(m,r,'total dist (m)'),
-      topSpeed:cn(m,r,'top speed (km/h)'),
-      wr:cn(m,r,'work rate (m/min)'),
-      hsc:cn(m,r,'hsc'),
-      sprints:cn(m,r,'sprints'),
-      strideAsym:cn(m,r,'stride asym %'),
-      gaitFlag:cv(m,r,'gait flag'),
-      gaitContext:gs(r,m['gait context']??0)||'',
-      cadenceL:null,cadenceR:null,strideL:null,strideR:null, // gait data not in current sheet
-      t1:cn(m,r,'ball control'),t2:cn(m,r,'passing'),
-      t3:cn(m,r,'receiving'),t4:cn(m,r,'dribbling'),
-      t5:cn(m,r,'finishing'),t6:cn(m,r,'both feet'),
-      tAvg:cn(m,r,'t avg'),
-      i1:cn(m,r,'scanning'),i2:cn(m,r,'decision speed'),
-      i3:cn(m,r,'spatial play'),i4:cn(m,r,'positioning'),
-      iAvg:cn(m,r,'i avg'),
-      s1:cn(m,r,'speed'),s2:cn(m,r,'agility'),
-      s3:cn(m,r,'endurance'),s4:cn(m,r,'recovery'),
-      sAvg:cn(m,r,'s avg'),
-      tips:cn(m,r,'tips score'),
-      sessionNote:gs(r,m['session note']??0),
-      devPriority:gs(r,m['dev priority']??0),
-    };
-  }).filter(Boolean);
+  return (tbl.rows||[])
+    .filter(r=>{
+      // Only keep real data rows: col 2 (Player ID) must start with TF-
+      // This naturally skips title rows, description rows, and header rows
+      const pid=gs(r,2);
+      return pid&&pid.toUpperCase().startsWith('TF-');
+    })
+    .map(r=>({
+      pid:gs(r,2).toUpperCase().trim(),
+      session:gs(r,0),date:gs(r,1),name:gs(r,3),
+      position:gs(r,4),team:gs(r,5),
+      posChange:gs(r,6),injuryFlag:gs(r,7),
+      touches:gn(r,9),tpm:gn(r,10),
+      leftPct:gn(r,11),rightPct:gn(r,12),
+      bilateral:gn(r,13),otp:gn(r,14),
+      shortAvg:gn(r,15),longAvg:gn(r,16),
+      ctrlRel:gn(r,17),maxRV:gn(r,18),
+      rvZ1:gn(r,19),rvZ2:gn(r,20),rvZ3:gn(r,21),
+      rvZ4:gn(r,22),rvZ5:gn(r,23),rvZ6:gn(r,24),
+      drift:gn(r,25),rel1h:gn(r,26),rel2h:gn(r,27),
+      crossFoot:gn(r,28),codIntel:gn(r,29),
+      dirAsym:gn(r,30),tactEco:gn(r,31),
+      totalDist:gn(r,32),topSpeed:gn(r,33),
+      wr:gn(r,34),hsc:gn(r,35),sprints:gn(r,36),
+      strideAsym:gn(r,37),gaitFlag:gs(r,38),gaitContext:gs(r,39),
+      t1:gn(r,40),t2:gn(r,41),t3:gn(r,42),
+      t4:gn(r,43),t5:gn(r,44),t6:gn(r,45),
+      tAvg:gn(r,46),
+      i1:gn(r,47),i2:gn(r,48),i3:gn(r,49),i4:gn(r,50),
+      iAvg:gn(r,51),
+      s1:gn(r,52),s2:gn(r,53),s3:gn(r,54),s4:gn(r,55),
+      sAvg:gn(r,56),
+      tips:gn(r,57),
+      sessionNote:gs(r,58),
+      devPriority:gs(r,59),
+      cadenceL:null,cadenceR:null,strideL:null,strideR:null,
+    }));
 }
 
 // ── Main ───────────────────────────────────────────────────────────────
@@ -684,8 +665,8 @@ if(!PID){
     <div style="color:#6B7280">Add your player ID:<br><code style="color:#2A7A62">?id=TF-VP-001</code></div>
   </div>`;
 } else {
-  // Fetch PM Session Data using range to skip multi-row headers
-  jsonp('PM Session Data','A5:BZ300',
+  // Fetch PM Session Data — no range needed, TF- filter handles header rows
+  jsonp('PM Session Data',null,
     tbl=>{
       const allData=parsePM(tbl);
       const myData=allData.filter(r=>r.pid===PID);

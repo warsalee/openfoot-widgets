@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Openfoot · Performance Records</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07100A;--card:#0D1810;--border:#1A2C1E;
+  --teal:#3FFECA;--gold:#DEB020;--white:#EEF2EE;
+  --mid:#7A9080;--muted:#3D5240;
+  --syne:'Syne',sans-serif;--inter:'Inter',sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--white);font-family:var(--inter);font-size:14px}
+.header{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:var(--syne);font-weight:800;font-size:13px;color:var(--teal);letter-spacing:.04em}
+.indicator{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.status{margin:6px 18px 0;font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:3px;display:none}
+.status.ok{background:rgba(63,254,202,.08);color:var(--teal);border:1px solid rgba(63,254,202,.2)}
+.status.err{background:rgba(249,36,82,.08);color:#F92452;border:1px solid rgba(249,36,82,.2)}
+.tabs{display:flex;margin:12px 18px 0;border:1px solid var(--border);border-radius:5px;overflow:hidden;width:fit-content}
+.tab{padding:7px 18px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:transparent;border:none;cursor:pointer;font-family:var(--inter);transition:all .15s}
+.tab.active{background:var(--teal);color:#07100A}
+.session{font-family:var(--mono);font-size:10px;color:var(--muted);padding:7px 18px 0;letter-spacing:.05em;min-height:22px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:10px 18px 18px}
+@media(max-width:480px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:12px;position:relative;overflow:hidden;transition:border-color .15s}
+.card:hover{border-color:var(--muted)}
+.card.top{border-color:rgba(63,254,202,.3);background:linear-gradient(140deg,#0D1810,#0B1F14)}
+.card.new{border-color:rgba(222,176,32,.3)}
+.badge{position:absolute;top:8px;right:8px;background:var(--gold);color:#07100A;font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:2px;text-transform:uppercase;letter-spacing:.06em}
+.icon{font-size:14px;margin-bottom:6px}
+.metric{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.value{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--white);line-height:1;margin-bottom:3px}
+.card.top .value{color:var(--teal)}
+.card.new .value{color:var(--gold)}
+.player{font-size:12px;font-weight:600;margin-bottom:2px}
+.context{font-size:10px;color:var(--mid);line-height:1.5}
+.vs{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border)}
+.vs .better{color:var(--teal)}.vs .close{color:var(--gold)}
+.loading{padding:36px 18px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">OPENFOOT</div>
+  <div class="indicator"><div class="dot"></div><span id="src">Connecting...</span></div>
+</div>
+<div class="status" id="status"></div>
+<div class="tabs">
+  <button class="tab active" onclick="show('alltime',this)">All Time</button>
+  <button class="tab" onclick="show('week',this)">This Week</button>
+</div>
+<div class="session" id="sess"></div>
+<div id="main"><div class="loading"><div class="spin"></div>Loading...</div></div>
+
+<script>
+const SID='1NWW6oiUrYKFtOqGSeotlhy8kqwwK5mRcssbSXpOn4bo';
+let AT=[],WK=[],cur='alltime';
+
+// ── Fallback data ──────────────────────────────────────────────────────────
+const FAT=[
+  {cat:'⚡ Top Speed',val:'28.3 km/h',player:'Loic',meta:'S003 · 04 Jul',note:'Fastest player across all sessions'},
+  {cat:'🎯 Strike Velocity',val:'76.7 km/h',player:'Babajee',meta:'S004 · 07 Jul',note:'All-time record — highest release velocity'},
+  {cat:'💥 Most Explosive',val:'80 HSC',player:'Manaav',meta:'S004 · 07 Jul',note:'Intense speed changes across 44 min'},
+  {cat:'🏃 Top Work Rate',val:'95.0 m/min',player:'Yogesh',meta:'S002 · 30 Jun',note:'Distance covered per minute — full session'},
+  {cat:'📍 Most Touches',val:'197',player:'Lou',meta:'S004 · 07 Jul',note:'Total ball contacts in a session'},
+  {cat:'🌟 Highest TIPS',val:'6.97',player:'Nissaar',meta:'S003 · 04 Jul',note:'Overall development rating'},
+];
+const FWK=[
+  {cat:'⚡ Top Speed',val:'27.3 km/h',player:'Yogesh',vs:'vs 28.3 · Loic',isNew:false},
+  {cat:'🎯 Strike Velocity',val:'76.7 km/h',player:'Babajee',vs:'New record',isNew:true},
+  {cat:'💥 Most Explosive',val:'80 HSC',player:'Manaav',vs:'= All-time',isNew:true},
+  {cat:'🏃 Top Work Rate',val:'90.8 m/min',player:'Rohan',vs:'vs 95.0 · Yogesh',isNew:false},
+  {cat:'📍 Most Touches',val:'197',player:'Lou',vs:'= All-time',isNew:true},
+  {cat:'📈 IDP Progress',val:'BF 4→5',player:'William',vs:'First IDP milestone',isNew:true},
+];
+
+// ── JSONP loader ───────────────────────────────────────────────────────────
+let cbCount=0;
+function jsonp(tab,onDone,onFail){
+  const name='_of'+Date.now()+(cbCount++);
+  const timer=setTimeout(()=>{
+    delete window[name];
+    onFail(new Error('Timeout — sheet may not be public'));
+  },8000);
+  window[name]=function(r){
+    clearTimeout(timer);
+    delete window[name];
+    if(r.status==='ok') onDone(r.table);
+    else onFail(new Error(r.errors?.[0]?.reason||'Sheet error'));
+  };
+  const el=document.createElement('script');
+  el.src=`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:json;responseHandler:${name}&sheet=${encodeURIComponent(tab)}`;
+  el.onerror=()=>{clearTimeout(timer);delete window[name];onFail(new Error('Script blocked'));};
+  document.head.appendChild(el);
+}
+
+// ── Parse gviz table ───────────────────────────────────────────────────────
+function gval(row,i){
+  if(!row.c||row.c[i]==null)return'';
+  const v=row.c[i];
+  return(v&&v.v!=null)?String(v.v):'';
+}
+// Find header row (where col[0] text contains 'Category')
+function parseAT(tbl){
+  const rows=tbl.rows||[];
+  return rows
+    .filter(r=>r&&r.c&&r.c[0]&&r.c[0].v&&String(r.c[0].v).trim()&&!String(r.c[0].v).includes('OPENFOOT'))
+    .map(r=>({
+      cat:gval(r,0),val:gval(r,1),player:gval(r,2),
+      meta:(gval(r,4)||'')+(gval(r,5)?' · '+gval(r,5):''),
+      note:gval(r,7)
+    }))
+    .filter(r=>r.val&&r.val!=='Record');
+}
+function parseWK(tbl){
+  const rows=tbl.rows||[];
+  return rows
+    .filter(r=>r&&r.c&&r.c[0]&&r.c[0].v&&String(r.c[0].v).trim()&&!String(r.c[0].v).includes('OPENFOOT'))
+    .map(r=>({
+      cat:gval(r,0),val:gval(r,1),player:gval(r,2),
+      vs:gval(r,3),isNew:/YES|🏆/i.test(gval(r,6))
+    }))
+    .filter(r=>r.val&&r.val!=='This Session');
+}
+
+// ── Fetch both tabs ────────────────────────────────────────────────────────
+function load(){
+  let done=0;
+  let failed=false;
+  function tryRender(){
+    done++;
+    if(done===2){
+      if(!failed){
+        setStatus('✓ Live data from Google Sheets','ok',2500);
+        document.getElementById('src').textContent='Live';
+      }
+      render();
+    }
+  }
+  jsonp('All-Time Records',
+    tbl=>{AT=parseAT(tbl);tryRender();},
+    e=>{AT=FAT;failed=true;tryRender();}
+  );
+  jsonp('Weekly Standouts',
+    tbl=>{
+      WK=parseWK(tbl);
+      // session label from 2nd row
+      const r=(tbl.rows||[])[1];
+      const s=r?gval(r,0):'';
+      if(s)document.getElementById('sess').textContent=s.split('·').slice(0,2).join('·').trim();
+      else document.getElementById('sess').textContent='S004 · 07 Jul 2026';
+      tryRender();
+    },
+    e=>{
+      WK=FWK;
+      document.getElementById('sess').textContent='S004 · 07 Jul 2026';
+      failed=true;
+      setStatus('⚠ CORS blocked — showing cached data. Check sheet tabs exist and sheet is public','err');
+      document.getElementById('src').textContent='Cached';
+      tryRender();
+    }
+  );
+}
+
+function setStatus(msg,type,autohide){
+  const el=document.getElementById('status');
+  el.textContent=msg;el.className='status '+type;el.style.display='block';
+  if(autohide)setTimeout(()=>el.style.display='none',autohide);
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function icon(cat){
+  const m={'Speed':'⚡','Strike':'🎯','Explosive':'💥','Work':'🏃','Touch':'📍','Dist':'📏','Sprint':'🔁','Bilat':'⚖️','Position':'🧠','COD':'🔄','TIPS':'🌟','IDP':'📈','Spatial':'🏅'};
+  for(const[k,v]of Object.entries(m))if(cat.includes(k))return v;
+  return'📊';
+}
+function lbl(cat){return cat.replace(/^[\u{1F300}-\u{1FFFF}\u2600-\u27BF\s]+/u,'').trim();}
+
+function render(){
+  const data=cur==='alltime'?AT:WK;
+  if(!data.length){document.getElementById('main').innerHTML='<div class="loading">No data found in this tab.</div>';return;}
+  const html=data.map((d,i)=>{
+    if(cur==='alltime'){
+      return`<div class="card ${i===0?'top':''}">
+        <div class="icon">${icon(d.cat)}</div>
+        <div class="metric">${lbl(d.cat)}</div>
+        <div class="value">${d.val}</div>
+        <div class="player">${d.player}</div>
+        <div class="context">${d.meta}</div>
+        ${d.note?`<div class="vs">${d.note.slice(0,60)}${d.note.length>60?'…':''}</div>`:''}
+      </div>`;
+    }else{
+      return`<div class="card ${d.isNew?'new':''}">
+        ${d.isNew?'<div class="badge">🏆 New</div>':''}
+        <div class="icon">${icon(d.cat)}</div>
+        <div class="metric">${lbl(d.cat)}</div>
+        <div class="value">${d.val}</div>
+        <div class="player">${d.player}</div>
+        ${d.vs?`<div class="vs"><span class="${d.isNew?'better':'close'}">${d.vs}</span></div>`:''}
+      </div>`;
+    }
+  }).join('');
+  document.getElementById('main').innerHTML=`<div class="grid">${html}</div>`;
+}
+
+function show(tab,btn){
+  cur=tab;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+load();
+</script>
+</body>
+</html>

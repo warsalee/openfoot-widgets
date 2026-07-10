@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Openfoot · Player Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F5F3EF;--card:#FFFFFF;--border:#E8E4DC;
+  --dark:#07100A;--dark2:#0D1810;
+  --teal-brand:#3FFECA;--red-brand:#F92452;--gold-brand:#DEB020;
+  --section-green:#2A7A62;--section-amber:#A0682A;--section-dark:#1A1A1A;
+  --text:#1A1A1A;--muted:#6B7280;--subtle:#9CA3AF;
+  --green:#2A7A62;--red:#C0392B;--amber:#B8813D;
+  --inter:'Inter',sans-serif;--mono:'DM Mono',monospace;--syne:'Syne',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--inter);font-size:14px;line-height:1.6;padding-bottom:60px}
+
+/* ── DARK HEADER ── */
+.hdr{background:var(--dark);padding:16px 18px 14px;border-bottom:2px solid var(--teal-brand)}
+.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.player-name{font-family:var(--syne);font-weight:800;font-size:26px;color:#EEF2EE;letter-spacing:-.02em;line-height:1}
+.brand{font-family:var(--syne);font-weight:800;font-size:11px;color:var(--teal-brand);letter-spacing:.08em}
+.hdr-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.tag{display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,.08);color:#BFC9BE;letter-spacing:.03em}
+.tag.pos{background:rgba(63,254,202,.12);color:var(--teal-brand)}
+.tag.id{font-family:var(--mono);font-size:10px}
+
+/* ── SESSION SELECTOR ── */
+.sess-bar{background:var(--dark2);padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sess-label{font-family:var(--mono);font-size:9px;color:#3D5240;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.sess-select{width:100%;background:#0A1A0D;border:1px solid #1A2C1E;border-radius:4px;padding:8px 12px;color:#EEF2EE;font-family:var(--inter);font-size:12px;font-weight:600;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%233D5240' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.sess-select:focus{outline:none;border-color:var(--teal-brand)}
+
+/* ── SECTIONS ── */
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:12px 14px;overflow:hidden}
+.section-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px 10px;border-bottom:2px solid}
+.section-hdr.green{border-color:var(--section-green);background:#F0FAF6}
+.section-hdr.green .section-title{color:var(--section-green)}
+.section-hdr.amber{border-color:var(--section-amber);background:#FDF7F0}
+.section-hdr.amber .section-title{color:var(--section-amber)}
+.section-hdr.dark{border-color:#333;background:#F8F8F8}
+.section-hdr.dark .section-title{color:var(--section-dark)}
+.section-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.section-body{padding:16px}
+
+/* ── SESSION PARAGRAPH ── */
+.sess-para{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:12px 14px;padding:16px}
+.sess-para .para-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.sess-para .para-text{font-size:13px;line-height:1.8;color:var(--text)}
+.sess-para .para-priority{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--section-amber);font-weight:600}
+.sess-para .para-priority span{color:var(--muted);font-weight:400}
+
+/* ── FOOT BAR ── */
+.foot-bar-wrap{padding:12px 0 8px}
+.foot-labels{display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:6px}
+.foot-labels .left{color:var(--section-green)}
+.foot-labels .right{color:var(--muted)}
+.foot-track{height:10px;border-radius:5px;background:#E8E4DC;overflow:hidden}
+.foot-fill{height:100%;background:var(--section-green);border-radius:5px;transition:width .6s ease}
+
+/* ── GAUGES ── */
+.gauges-row{display:flex;justify-content:space-around;margin:12px 0}
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.gauge-label{font-size:11px;color:var(--muted);text-align:center;max-width:80px}
+
+/* ── METRIC ROWS ── */
+.metric-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.metric-row:last-child{border-bottom:none;padding-bottom:0}
+.metric-info{}
+.metric-name{font-size:13px;font-weight:500}
+.metric-desc{font-size:11px;color:var(--muted)}
+.metric-val{font-size:16px;font-weight:700}
+.metric-val.green{color:var(--section-green)}
+.metric-val.red{color:var(--red)}
+.metric-val.amber{color:var(--amber)}
+.metric-val .unit{font-size:11px;font-weight:400;color:var(--muted);margin-left:2px}
+
+/* ── BILATERAL LABEL ── */
+.bilat-label{font-size:13px;font-weight:700}
+.bilat-label.red{color:var(--red)}
+.bilat-label.amber{color:var(--amber)}
+.bilat-label.green{color:var(--section-green)}
+
+/* ── DRIFT CARDS ── */
+.drift-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.drift-card{flex:1;background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.drift-card .dc-label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.drift-card .dc-val{font-size:20px;font-weight:700;color:var(--text)}
+.drift-card.result{background:#F0FAF6;border-color:rgba(42,122,98,.2)}
+.drift-card.result .dc-val{color:var(--section-green)}
+.drift-card.result.slow{background:#FEF5F4;border-color:rgba(192,57,43,.2)}
+.drift-card.result.slow .dc-val{color:var(--red)}
+.drift-arrow{font-size:20px;color:var(--muted);flex-shrink:0}
+.drift-arrow.down{color:var(--section-green)}
+.drift-arrow.up{color:var(--red)}
+.drift-note{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px;padding:10px;background:#F8F7F4;border-radius:6px}
+
+/* ── RV BARS ── */
+.rv-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rv-label{font-family:var(--mono);font-size:10px;color:var(--muted);width:36px;flex-shrink:0}
+.rv-track{flex:1;height:14px;border-radius:3px;background:#F0EDE8;overflow:hidden}
+.rv-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.rv-count{font-family:var(--mono);font-size:10px;color:var(--muted);width:20px;text-align:right;flex-shrink:0}
+.rv-colors{--z1:#E8E4DC;--z2:#9DB5A9;--z3:var(--section-green);--z4:var(--amber);--z5:var(--red)}
+
+/* ── TWO CARD ROW ── */
+.two-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:14px}
+.stat-card .sc-label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.stat-card .sc-val{font-size:24px;font-weight:700;color:var(--text);line-height:1}
+.stat-card .sc-unit{font-size:13px;font-weight:400;color:var(--muted)}
+.stat-card .sc-note{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* ── STRIDE BARS ── */
+.stride-group{margin-bottom:12px}
+.stride-group-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.stride-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.stride-side{font-family:var(--mono);font-size:10px;color:var(--muted);width:32px;flex-shrink:0}
+.stride-track{flex:1;height:12px;border-radius:3px;background:#F0EDE8;overflow:hidden}
+.stride-fill{height:100%;background:var(--section-green);border-radius:3px;transition:width .5s}
+.stride-val{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text);width:60px;text-align:right;flex-shrink:0}
+
+/* ── GAIT STATUS ── */
+.gait-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.gait-status.ok{background:#E8F5EE;color:var(--section-green)}
+.gait-status.warn{background:#FEF5E7;color:var(--amber)}
+.gait-status.flag{background:#FEF5F4;color:var(--red)}
+.gait-warn{font-size:11px;color:var(--amber);margin-top:8px}
+
+/* ── TIPS ── */
+.tips-total{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.tips-score-big{font-family:var(--mono);font-size:40px;font-weight:500;color:var(--section-green);line-height:1}
+.tips-meta{}
+.tips-meta .tm-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.tips-meta .tm-pos{font-size:13px;font-weight:600}
+.pillars-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.pillar-card{background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.pillar-card .pc-val{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;margin-bottom:2px}
+.pillar-card .pc-name{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.crit-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F0EDE8}
+.crit-row:nth-child(odd){padding-right:10px}
+.crit-row:nth-child(even){padding-left:10px;border-left:1px solid #F0EDE8}
+.crit-name{font-size:11px;color:var(--muted)}
+.crit-score{font-family:var(--mono);font-size:12px;font-weight:700}
+.crit-score.red{color:var(--red)}
+.crit-score.amber{color:var(--amber)}
+.crit-score.green{color:var(--section-green)}
+
+/* ── DRILLS ── */
+.drills-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.drill-card{background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:12px;text-decoration:none;display:flex;align-items:center;gap:10px;transition:border-color .15s}
+.drill-card:hover{border-color:var(--section-green)}
+.drill-card.priority{border-color:rgba(192,57,43,.25);background:#FEF9F8}
+.drill-icon{font-size:18px;flex-shrink:0}
+.drill-info .dn{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.drill-info .dt{font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.drill-card.priority .dt{color:var(--red)}
+.drill-card:not(.priority) .dt{color:var(--muted)}
+.drill-yt{font-size:10px;color:var(--section-green);margin-top:2px}
+
+/* ── GENERATE REPORT ── */
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 28px);margin:16px 14px 0;padding:12px;background:var(--section-green);color:white;border:none;border-radius:8px;font-family:var(--inter);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.03em;transition:opacity .2s}
+.gen-btn:hover{opacity:.9}
+
+/* ── LOADING / ERROR ── */
+.loading{padding:48px 20px;text-align:center;color:var(--muted);font-size:12px}
+.spin{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--section-green);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── PRINT ── */
+@media print{
+  .sess-bar,.hdr-tags,.gen-btn,.sess-select,.sess-label{display:none}
+  .section,.sess-para{border:1px solid #ddd;margin:6px 0}
+  body{background:white;padding:0}
+  .hdr{background:#1A1A1A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<div id="app"><div class="loading"><div class="spin"></div>Loading your data...</div></div>
+
+<script>
+const SHEET_ID='1NWW6oiUrYKFtOqGSeotlhy8kqwwK5mRcssbSXpOn4bo';
+
+// ── Drill library ──────────────────────────────────────────────────────
+const DRILLS={
+  'Ball Control':{icon:'🎯',yt:'https://www.youtube.com/results?search_query=ball+control+drills+football'},
+  'Passing':{icon:'↗️',yt:'https://www.youtube.com/results?search_query=passing+accuracy+drills+football'},
+  'Receiving':{icon:'📥',yt:'https://www.youtube.com/results?search_query=first+touch+receiving+football'},
+  'Dribbling':{icon:'⚡',yt:'https://www.youtube.com/results?search_query=dribbling+1v1+football+drills'},
+  'Finishing':{icon:'🥅',yt:'https://www.youtube.com/results?search_query=finishing+shooting+drills+football'},
+  'Both Feet':{icon:'👟',yt:'https://www.youtube.com/results?search_query=weak+foot+training+football'},
+  'Scanning':{icon:'👁️',yt:'https://www.youtube.com/results?search_query=scanning+awareness+football'},
+  'Decision Speed':{icon:'🧠',yt:'https://www.youtube.com/results?search_query=quick+decision+football+drills'},
+  'Spatial Play':{icon:'🗺️',yt:'https://www.youtube.com/results?search_query=positional+play+football'},
+  'Positioning':{icon:'📍',yt:'https://www.youtube.com/results?search_query=football+positioning+movement'},
+  'Speed':{icon:'🏃',yt:'https://www.youtube.com/results?search_query=speed+agility+football+training'},
+  'Agility':{icon:'🔄',yt:'https://www.youtube.com/results?search_query=agility+football+training'},
+  'Endurance':{icon:'💪',yt:'https://www.youtube.com/results?search_query=football+endurance+training'},
+  'Recovery':{icon:'⏱️',yt:'https://www.youtube.com/results?search_query=football+recovery+fitness'},
+};
+
+// ── JSONP ──────────────────────────────────────────────────────────────
+let _c=0;
+function jsonp(tab,range,done,fail){
+  const n='_pw'+Date.now()+(_c++);
+  const t=setTimeout(()=>{delete window[n];fail(new Error('Timeout'));},10000);
+  window[n]=r=>{clearTimeout(t);delete window[n];r.status==='ok'?done(r.table):fail(new Error('Sheet error'));};
+  const s=document.createElement('script');
+  const rangeParam=range?`&range=${encodeURIComponent(range)}`:'';
+  s.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${n}&sheet=${encodeURIComponent(tab)}${rangeParam}`;
+  s.onerror=()=>{clearTimeout(t);delete window[n];fail(new Error('Script blocked'));};
+  document.head.appendChild(s);
+}
+
+// ── Parse helpers ──────────────────────────────────────────────────────
+function gv(row,i){if(!row.c||row.c[i]==null)return null;const v=row.c[i];return v&&v.v!=null?v.v:null;}
+function gs(row,i){const v=gv(row,i);return v!=null?String(v):''}
+function gn(row,i){const v=gv(row,i);if(v==null)return null;const n=parseFloat(v);return isNaN(n)?null:n;}
+
+// Build column index map from gviz cols
+function colMap(tbl){
+  const m={};
+  (tbl.cols||[]).forEach((c,i)=>{if(c.label)m[c.label.toLowerCase().trim()]=i;});
+  return m;
+}
+function cv(m,row,...labels){
+  for(const l of labels){
+    const i=m[l.toLowerCase().trim()];
+    if(i!=null){const v=gv(row,i);if(v!=null)return v;}
+  }
+  return null;
+}
+function cn(m,row,...labels){const v=cv(m,row,...labels);if(v==null)return null;const n=parseFloat(v);return isNaN(n)?null:n;}
+
+// ── SVG Gauge ──────────────────────────────────────────────────────────
+function gauge(value,max,color,displayVal,unit,size=100){
+  const pct=Math.min(Math.max((value||0)/max,0),1);
+  const arc=157;
+  const offset=arc*(1-pct);
+  const sw=8;
+  return`<svg viewBox="0 0 120 75" width="${size}" height="${Math.round(size*0.65)}">
+    <path d="M 10 65 A 50 50 0 0 1 110 65" stroke="#E8E4DC" stroke-width="${sw}" fill="none" stroke-linecap="round"/>
+    <path d="M 10 65 A 50 50 0 0 1 110 65" stroke="${color}" stroke-width="${sw}" fill="none"
+          stroke-linecap="round" stroke-dasharray="${arc}" stroke-dashoffset="${offset.toFixed(1)}" style="transition:stroke-dashoffset .6s ease"/>
+    <text x="60" y="57" text-anchor="middle" font-family="DM Mono,monospace" font-size="17" font-weight="700" fill="#1A1A1A">${displayVal}</text>
+    <text x="60" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9CA3AF">${unit}</text>
+  </svg>`;
+}
+
+// ── Colors ─────────────────────────────────────────────────────────────
+function bilatColor(v){return v>=0.20?'#2A7A62':v>=0.10?'#B8813D':'#C0392B';}
+function bilatLabel(v){return v>=0.20?'Balanced':v>=0.10?'Developing':'Dominant';}
+function tipsColor(v){return v>=6.8?'#2A7A62':v>=5.8?'#B8813D':'#C0392B';}
+function critColor(v){return v>=8?'green':v<=5?'red':v<=6?'amber':'';}
+function critColorHex(v){return v>=8?'#2A7A62':v<=5?'#C0392B':v<=6?'#B8813D':'#1A1A1A';}
+
+// ── Build gauge row ────────────────────────────────────────────────────
+function gaugeRow(bilateral,otp,tpm){
+  const bv=bilateral||0;
+  const bc=bilatColor(bv);
+  const g1=gauge(bv,0.25,bc,bv!=null?bv.toFixed(3):'—','/0.25');
+  const g2=gauge(otp||0,100,'#2A7A62',otp!=null?otp.toFixed(1):'—','%');
+  const g3=gauge(tpm||0,6,'#2A7A62',tpm!=null?tpm.toFixed(2):'—','/min');
+  return`<div class="gauges-row">
+    <div class="gauge-wrap">${g1}<div class="gauge-label">Bilateral</div></div>
+    <div class="gauge-wrap">${g2}<div class="gauge-label">One-Touch %</div></div>
+    <div class="gauge-wrap">${g3}<div class="gauge-label">Touches/min</div></div>
+  </div>`;
+}
+
+// ── RV bar ─────────────────────────────────────────────────────────────
+function rvBars(z1,z2,z3,z4,z5,z6){
+  const total=(z1||0)+(z2||0)+(z3||0)+(z4||0)+(z5||0)+(z6||0)||1;
+  const zones=[
+    {r:'0–5',v:z1||0,c:'#E8E4DC'},
+    {r:'5–10',v:z2||0,c:'#9DB5A9'},
+    {r:'10–15',v:z3||0,c:'#2A7A62'},
+    {r:'15–20',v:z4||0,c:'#B8813D'},
+    {r:'20–25',v:z5||0,c:'#C0392B'},
+    {r:'25+',v:z6||0,c:'#7B1D1D'},
+  ];
+  return`<div style="margin-top:12px">
+    <div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:8px">Release Velocity Distribution (m/s)</div>
+    ${zones.map(z=>`<div class="rv-bar-row">
+      <div class="rv-label">${z.r}</div>
+      <div class="rv-track"><div class="rv-fill" style="width:${(z.v/total*100).toFixed(0)}%;background:${z.c}"></div></div>
+      <div class="rv-count">${z.v}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ── Stride bars ────────────────────────────────────────────────────────
+function strideBars(label,leftVal,rightVal,unit,maxVal){
+  if(!leftVal&&!rightVal)return'';
+  const lp=(leftVal/maxVal*100).toFixed(0);
+  const rp=(rightVal/maxVal*100).toFixed(0);
+  const diff=leftVal&&rightVal?Math.abs(leftVal-rightVal)/Math.max(leftVal,rightVal)*100:0;
+  return`<div class="stride-group">
+    <div class="stride-group-title">${label}</div>
+    <div class="stride-row">
+      <div class="stride-side">LEFT</div>
+      <div class="stride-track"><div class="stride-fill" style="width:${lp}%"></div></div>
+      <div class="stride-val">${leftVal?.toFixed(1)||'—'}${unit?'<span style="font-size:9px;color:#9CA3AF"> '+unit+'</span>':''}</div>
+    </div>
+    <div class="stride-row">
+      <div class="stride-side">RIGHT</div>
+      <div class="stride-track"><div class="stride-fill" style="width:${rp}%"></div></div>
+      <div class="stride-val">${rightVal?.toFixed(1)||'—'}${unit?'<span style="font-size:9px;color:#9CA3AF"> '+unit+'</span>':''}</div>
+    </div>
+    ${diff>5?`<div class="gait-warn">⚠ ${diff.toFixed(0)}% difference between sides</div>`:''}
+  </div>`;
+}
+
+// ── Priority drills ────────────────────────────────────────────────────
+function drillCards(data){
+  const priority=[];
+  const secondary=[];
+  const criteria=[
+    {name:'Both Feet',score:data.t6},
+    {name:'Scanning',score:data.i1},
+    {name:'Decision Speed',score:data.i2},
+    {name:'Ball Control',score:data.t1},
+    {name:'Receiving',score:data.t3},
+    {name:'Positioning',score:data.i4},
+  ];
+  criteria.forEach(c=>{
+    if(c.score!=null&&c.score<=5)priority.push({name:c.name,priority:true});
+    else if(c.score!=null&&c.score<=6)secondary.push({name:c.name,priority:false});
+  });
+  const all=[...priority,...secondary].slice(0,6);
+  if(!all.length)all.push({name:'Both Feet',priority:false},{name:'Decision Speed',priority:false},{name:'Positioning',priority:false});
+  return`<div class="drills-grid">${all.map(d=>{
+    const info=DRILLS[d.name]||{icon:'📋',yt:'https://youtube.com'};
+    return`<a class="drill-card ${d.priority?'priority':''}" href="${info.yt}" target="_blank" rel="noopener">
+      <div class="drill-icon">${info.icon}</div>
+      <div class="drill-info">
+        <div class="dn">${d.name}</div>
+        <div class="dt">${d.priority?'🔴 Priority':'Development'}</div>
+        <div class="drill-yt">▶ Watch drills</div>
+      </div>
+    </a>`;
+  }).join('')}</div>`;
+}
+
+// ── Render one session ─────────────────────────────────────────────────
+function renderSession(d,prevTips){
+  const bv=d.bilateral||0;
+  const bColor=bilatColor(bv);
+  const bLabel=bilatLabel(bv);
+  const drift=d.drift;
+  const driftFaster=drift!=null&&drift<1.0;
+  const driftSlower=drift!=null&&drift>1.1;
+  const gaitPct=d.strideAsym||0;
+  const gaitOk=gaitPct<10||(d.gaitFlag&&String(d.gaitFlag).toLowerCase().includes('gk'));
+  const tipsScore=d.tips;
+  const tipsDelta=tipsScore!=null&&prevTips!=null?tipsScore-prevTips:null;
+
+  return`
+    <!-- SESSION PARAGRAPH -->
+    ${d.sessionNote?`<div class="sess-para">
+      <div class="para-label">Your Session</div>
+      <div class="para-text">${d.sessionNote}</div>
+      ${d.devPriority?`<div class="para-priority"><span>Work on: </span>${d.devPriority}</div>`:''}
+    </div>`:''}
+
+    <!-- BALL MASTERY -->
+    <div class="section">
+      <div class="section-hdr green">
+        <div class="section-title">Ball Mastery</div>
+      </div>
+      <div class="section-body">
+        <div class="foot-bar-wrap">
+          <div class="foot-labels">
+            <span class="left">LEFT ${d.leftPct!=null?d.leftPct.toFixed(1):0}%</span>
+            <span class="right">RIGHT ${d.rightPct!=null?d.rightPct.toFixed(1):100}%</span>
+          </div>
+          <div class="foot-track"><div class="foot-fill" style="width:${d.leftPct||0}%"></div></div>
+        </div>
+        ${gaugeRow(d.bilateral,d.otp,d.tpm)}
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Avg release time (short possession)</div>
+            <div class="metric-desc">Decision speed under pressure</div>
+          </div>
+          <div class="metric-val">${d.shortAvg!=null?d.shortAvg.toFixed(2):'—'}<span class="unit">sec</span></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Avg time on ball (long possession)</div>
+            <div class="metric-desc">Ball retention quality</div>
+          </div>
+          <div class="metric-val">${d.longAvg!=null?d.longAvg.toFixed(2):'—'}<span class="unit">sec</span></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info"><div class="metric-name">Bilateral score</div></div>
+          <div class="bilat-label ${bv>=0.20?'green':bv>=0.10?'amber':'red'}">${bv.toFixed(3)} — ${bLabel}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DECISION MAKING -->
+    <div class="section">
+      <div class="section-hdr green">
+        <div class="section-title">Decision Making & Intelligence</div>
+      </div>
+      <div class="section-body">
+        <div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:8px">Release Tempo Drift</div>
+        <div class="drift-row">
+          <div class="drift-card">
+            <div class="dc-label">1st Half</div>
+            <div class="dc-val">${d.rel1h!=null?d.rel1h.toFixed(3)+'s':'—'}</div>
+          </div>
+          <div class="drift-arrow ${driftFaster?'down':driftSlower?'up':''}">
+            ${driftFaster?'↓':driftSlower?'↑':'→'}
+          </div>
+          <div class="drift-card">
+            <div class="dc-label">2nd Half</div>
+            <div class="dc-val">${d.rel2h!=null?d.rel2h.toFixed(3)+'s':'—'}</div>
+          </div>
+          <div style="font-size:8px;color:#9CA3AF;padding:0 2px">→</div>
+          <div class="drift-card result ${driftSlower?'slow':''}">
+            <div class="dc-label">Drift</div>
+            <div class="dc-val">${drift!=null?drift.toFixed(2):'—'}</div>
+            ${drift!=null?`<div style="font-size:9px;font-weight:600;color:${driftFaster?'#2A7A62':driftSlower?'#C0392B':'#6B7280'}">${driftFaster?'FASTER':driftSlower?'SLOWER':'STABLE'}</div>`:''}
+          </div>
+        </div>
+        <div class="drift-note">A ratio below 1.0 means faster decisions in the 2nd half — a positive sign of sharpness under fatigue.</div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">COD Intelligence</div>
+            <div class="metric-desc">Turns made without the ball — off-ball movement</div>
+          </div>
+          <div class="metric-val ${d.codIntel!=null&&d.codIntel>=85?'green':''}">
+            ${d.codIntel!=null?d.codIntel.toFixed(1):'—'}<span class="unit">%</span>
+          </div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Directional Asymmetry</div>
+            <div class="metric-desc">L vs R turn balance — lower is better</div>
+          </div>
+          <div class="metric-val ${d.dirAsym!=null&&d.dirAsym<10?'green':d.dirAsym!=null&&d.dirAsym>20?'amber':''}">
+            ${d.dirAsym!=null?d.dirAsym.toFixed(1):'—'}<span class="unit">%</span>
+          </div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Cross-Foot Execution</div>
+            <div class="metric-desc">Possessions received and released on different feet</div>
+          </div>
+          <div class="metric-val ${d.crossFoot!=null&&d.crossFoot>=20?'green':d.crossFoot!=null&&d.crossFoot<10?'red':'amber'}">
+            ${d.crossFoot!=null?d.crossFoot.toFixed(1):'—'}<span class="unit">%</span>
+          </div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Tactical Economy</div>
+            <div class="metric-desc">Distance covered per ball contact — lower = smarter positioning</div>
+          </div>
+          <div class="metric-val">
+            ${d.tactEco!=null?d.tactEco.toFixed(0):'—'}<span class="unit">m/touch</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TECHNICAL QUALITY -->
+    <div class="section">
+      <div class="section-hdr amber">
+        <div class="section-title">Technical Quality</div>
+      </div>
+      <div class="section-body">
+        <div class="two-cards">
+          <div class="stat-card">
+            <div class="sc-label">Controlled Release</div>
+            <div class="sc-val">${d.ctrlRel!=null?d.ctrlRel.toFixed(1):'—'}<span class="sc-unit">%</span></div>
+            <div class="sc-note">Inside foot zone</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Max Release Velocity</div>
+            <div class="sc-val">${d.maxRV!=null?d.maxRV.toFixed(1):'—'}<span class="sc-unit">km/h</span></div>
+            <div class="sc-note">Peak kicking power</div>
+          </div>
+        </div>
+        ${rvBars(d.rvZ1,d.rvZ2,d.rvZ3,d.rvZ4,d.rvZ5,d.rvZ6)}
+      </div>
+    </div>
+
+    <!-- PHYSICAL LOAD -->
+    <div class="section">
+      <div class="section-hdr dark">
+        <div class="section-title">Physical Load</div>
+      </div>
+      <div class="section-body">
+        <div class="two-cards">
+          <div class="stat-card">
+            <div class="sc-label">Total Distance</div>
+            <div class="sc-val">${d.totalDist!=null?(d.totalDist/1000).toFixed(2):'—'}<span class="sc-unit">km</span></div>
+            ${d.sessionDuration?`<div class="sc-note">${d.sessionDuration} min</div>`:''}
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Top Speed</div>
+            <div class="sc-val">${d.topSpeed!=null?d.topSpeed.toFixed(1):'—'}<span class="sc-unit">km/h</span></div>
+            <div class="sc-note">Session maximum</div>
+          </div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Work Rate</div>
+            <div class="metric-desc">Distance covered per minute</div>
+          </div>
+          <div class="metric-val">${d.wr!=null?d.wr.toFixed(1):'—'}<span class="unit">m/min</span></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">High Speed Changes (HSC)</div>
+            <div class="metric-desc">Explosive acceleration &amp; deceleration events</div>
+          </div>
+          <div class="metric-val">${d.hsc!=null?d.hsc:'—'}</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Sprint Count</div>
+            <div class="metric-desc">Max effort runs during session</div>
+          </div>
+          <div class="metric-val">${d.sprints!=null?d.sprints:'—'}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIOMECHANICS -->
+    <div class="section">
+      <div class="section-hdr green">
+        <div class="section-title">Biomechanics</div>
+      </div>
+      <div class="section-body">
+        <div class="metric-row">
+          <div class="metric-info">
+            <div class="metric-name">Gait Asymmetry Index <strong style="color:${gaitOk?'#2A7A62':gaitPct>15?'#C0392B':'#B8813D'}">${gaitPct>0?gaitPct.toFixed(1)+'%':'—'}</strong></div>
+            ${d.gaitContext?`<div class="metric-desc">${d.gaitContext}</div>`:''}
+          </div>
+          <div class="gait-status ${gaitOk?'ok':gaitPct>15?'flag':'warn'}">
+            ${gaitOk?'✓ Within normal range':gaitPct>15?'⚠ Review recommended':'⚠ Monitor'}
+          </div>
+        </div>
+        ${strideBars('Stride Cadence (steps/min)',d.cadenceL,d.cadenceR,'',160)}
+        ${strideBars('Stride Length (cm)',d.strideL,d.strideR,'cm',160)}
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="section">
+      <div class="section-hdr amber">
+        <div class="section-title">TIPS Rating</div>
+      </div>
+      <div class="section-body">
+        <div class="tips-total">
+          <div class="tips-score-big" style="color:${tipsScore!=null?tipsColor(tipsScore):'#9CA3AF'}">${tipsScore!=null?tipsScore.toFixed(2):'—'}</div>
+          <div class="tips-meta">
+            <div class="tm-label">Overall TIPS</div>
+            <div class="tm-pos">${d.position||'—'}</div>
+            ${tipsDelta!=null?`<div style="font-size:11px;color:${tipsDelta>0.05?'#2A7A62':tipsDelta<-0.05?'#C0392B':'#9CA3AF'};margin-top:2px">
+              ${tipsDelta>0.05?'▲':tipsDelta<-0.05?'▼':'→'} ${tipsDelta>=0?'+':''}${tipsDelta.toFixed(2)} vs last session
+            </div>`:''}
+          </div>
+        </div>
+        <div class="pillars-row">
+          <div class="pillar-card">
+            <div class="pc-val" style="color:#2A7A62">${d.tAvg!=null?d.tAvg.toFixed(1):'—'}</div>
+            <div class="pc-name">Technique</div>
+          </div>
+          <div class="pillar-card">
+            <div class="pc-val" style="color:#B8813D">${d.iAvg!=null?d.iAvg.toFixed(1):'—'}</div>
+            <div class="pc-name">Intelligence</div>
+          </div>
+          <div class="pillar-card">
+            <div class="pc-val" style="color:#6B7280">${d.sAvg!=null?d.sAvg.toFixed(1):'—'}</div>
+            <div class="pc-name">Physical</div>
+          </div>
+        </div>
+        <div class="criteria-grid">
+          ${[
+            ['Ball Control',d.t1],['Passing',d.t2],
+            ['Receiving',d.t3],['Dribbling',d.t4],
+            ['Finishing',d.t5],['Both Feet',d.t6],
+            ['Scanning',d.i1],['Decision Speed',d.i2],
+            ['Spatial Play',d.i3],['Positioning',d.i4],
+            ['Speed',d.s1],['Agility',d.s2],
+            ['Endurance',d.s3],['Recovery',d.s4],
+          ].map(([name,score])=>`
+            <div class="crit-row">
+              <div class="crit-name">${name}</div>
+              <div class="crit-score ${score!=null?critColor(score):''}" style="color:${score!=null?critColorHex(score):'#9CA3AF'}">${score!=null?score:'—'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- DRILLS -->
+    <div class="section">
+      <div class="section-hdr dark">
+        <div class="section-title">Work on these between sessions</div>
+      </div>
+      <div class="section-body">${drillCards(d)}</div>
+    </div>
+  `;
+}
+
+// ── Parse PM Session Data ──────────────────────────────────────────────
+function parsePM(tbl){
+  const m=colMap(tbl);
+  return (tbl.rows||[]).filter(r=>r&&r.c&&cv(m,r,'player id','playerid')).map(r=>{
+    const pid=String(cv(m,r,'player id','playerid')||'').toUpperCase().trim();
+    if(!pid)return null;
+    return{
+      pid,
+      session:gs(r,m['session']??0),
+      date:gs(r,m['session date']??1),
+      name:gs(r,m['player name']??3),
+      position:gs(r,m['position played']??4),
+      team:gs(r,m['team']??5),
+      posChange:gs(r,m['position change']??6),
+      injuryFlag:gs(r,m['injury/pain flag']??7),
+      touches:cn(m,r,'touches'),
+      tpm:cn(m,r,'touches/min'),
+      leftPct:cn(m,r,'left %'),
+      rightPct:cn(m,r,'right %'),
+      bilateral:cn(m,r,'bilateral'),
+      otp:cn(m,r,'one-touch %'),
+      shortAvg:cn(m,r,'short avg (s)'),
+      longAvg:cn(m,r,'long avg (s)'),
+      ctrlRel:cn(m,r,'ctrl release %'),
+      maxRV:cn(m,r,'max rv (km/h)'),
+      rvZ1:cn(m,r,'rv z1'),rvZ2:cn(m,r,'rv z2'),rvZ3:cn(m,r,'rv z3'),
+      rvZ4:cn(m,r,'rv z4'),rvZ5:cn(m,r,'rv z5'),rvZ6:cn(m,r,'rv z6'),
+      drift:cn(m,r,'drift ratio'),
+      rel1h:cn(m,r,'release 1h'),
+      rel2h:cn(m,r,'release 2h'),
+      crossFoot:cn(m,r,'cross-foot %'),
+      codIntel:cn(m,r,'cod intel %'),
+      dirAsym:cn(m,r,'dir asym %'),
+      tactEco:cn(m,r,'tact eco (m)'),
+      totalDist:cn(m,r,'total dist (m)'),
+      topSpeed:cn(m,r,'top speed (km/h)'),
+      wr:cn(m,r,'work rate (m/min)'),
+      hsc:cn(m,r,'hsc'),
+      sprints:cn(m,r,'sprints'),
+      strideAsym:cn(m,r,'stride asym %'),
+      gaitFlag:cv(m,r,'gait flag'),
+      gaitContext:gs(r,m['gait context']??0)||'',
+      cadenceL:null,cadenceR:null,strideL:null,strideR:null, // gait data not in current sheet
+      t1:cn(m,r,'ball control'),t2:cn(m,r,'passing'),
+      t3:cn(m,r,'receiving'),t4:cn(m,r,'dribbling'),
+      t5:cn(m,r,'finishing'),t6:cn(m,r,'both feet'),
+      tAvg:cn(m,r,'t avg'),
+      i1:cn(m,r,'scanning'),i2:cn(m,r,'decision speed'),
+      i3:cn(m,r,'spatial play'),i4:cn(m,r,'positioning'),
+      iAvg:cn(m,r,'i avg'),
+      s1:cn(m,r,'speed'),s2:cn(m,r,'agility'),
+      s3:cn(m,r,'endurance'),s4:cn(m,r,'recovery'),
+      sAvg:cn(m,r,'s avg'),
+      tips:cn(m,r,'tips score'),
+      sessionNote:gs(r,m['session note']??0),
+      devPriority:gs(r,m['dev priority']??0),
+    };
+  }).filter(Boolean);
+}
+
+// ── Main ───────────────────────────────────────────────────────────────
+const params=new URLSearchParams(location.search);
+const PID=(params.get('id')||'').toUpperCase().trim();
+
+if(!PID){
+  document.getElementById('app').innerHTML=`<div class="loading">
+    <div style="font-size:28px;margin-bottom:12px">🔗</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">No player ID in URL</div>
+    <div style="color:#6B7280">Add your player ID:<br><code style="color:#2A7A62">?id=TF-VP-001</code></div>
+  </div>`;
+} else {
+  // Fetch PM Session Data using range to skip multi-row headers
+  jsonp('PM Session Data','A5:BZ300',
+    tbl=>{
+      const allData=parsePM(tbl);
+      const myData=allData.filter(r=>r.pid===PID);
+
+      if(!myData.length){
+        document.getElementById('app').innerHTML=`<div class="loading">
+          <div style="font-size:28px;margin-bottom:12px">🔍</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px">No data for ${PID}</div>
+          <div style="color:#6B7280">Check the URL or ask your coach to confirm your ID.</div>
+        </div>`;
+        return;
+      }
+
+      // Sort sessions chronologically
+      const sessions=[...new Map(myData.map(d=>[d.session,d])).values()]
+        .sort((a,b)=>a.session.localeCompare(b.session));
+
+      const player=sessions[sessions.length-1];
+      const name=player.name||PID;
+      const pos=player.position||'—';
+      const team=player.team||'';
+
+      // Build dropdown
+      const opts=sessions.map((s,i)=>`<option value="${s.session}" ${i===sessions.length-1?'selected':''}>
+        ${s.date||s.session} · ${s.position||pos} · ${s.session}${i===sessions.length-1?' (latest)':''}
+      </option>`).join('');
+
+      // Render
+      const latestData=sessions[sessions.length-1];
+      const prevData=sessions.length>1?sessions[sessions.length-2]:null;
+
+      document.getElementById('app').innerHTML=`
+        <div class="hdr">
+          <div class="hdr-top">
+            <div>
+              <div class="player-name">${name}</div>
+            </div>
+            <div class="brand">OPENFOOT</div>
+          </div>
+          <div class="hdr-tags">
+            <span class="tag pos">${pos}</span>
+            <span class="tag id">${PID}</span>
+            ${team?`<span class="tag">${team}</span>`:''}
+            <span class="tag">${sessions.length} session${sessions.length!==1?'s':''}</span>
+          </div>
+        </div>
+        <div class="sess-bar">
+          <div class="sess-label">Session history</div>
+          <select class="sess-select" id="sess-sel" onchange="switchSess(this.value)">${opts}</select>
+        </div>
+        <div id="sess-content">
+          ${renderSession(latestData,prevData?prevData.tips:null)}
+        </div>
+        <button class="gen-btn" onclick="window.print()">📄 Generate Report</button>
+      `;
+
+      window._sessions=sessions;
+    },
+    err=>{
+      document.getElementById('app').innerHTML=`<div class="loading">
+        <div style="font-size:28px;margin-bottom:12px">⚠</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Could not load data</div>
+        <div style="color:#6B7280">Sheet may be loading. Try refreshing in 10 seconds.<br><small>${err.message}</small></div>
+      </div>`;
+    }
+  );
+}
+
+function switchSess(sessId){
+  const sessions=window._sessions||[];
+  const idx=sessions.findIndex(s=>s.session===sessId);
+  if(idx<0)return;
+  const cur=sessions[idx];
+  const prev=idx>0?sessions[idx-1]:null;
+  document.getElementById('sess-content').innerHTML=renderSession(cur,prev?prev.tips:null);
+}
+</script>
+</body>
+</html>

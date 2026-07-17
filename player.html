@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,21 @@
 <title>Openfoot — Player Passport</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+  // Chart.js load with CDN fallback: if the primary CDN is blocked (network
+  // policy, ad blocker, regional restriction), fall back to alternates so the
+  // widget doesn't lose all charts to a single blocked host.
+  function __loadChartFallback(remaining){
+    if (!remaining.length) return;
+    var url = remaining.shift();
+    var s = document.createElement("script");
+    s.src = url;
+    s.onerror = function(){ __loadChartFallback(remaining); };
+    document.head.appendChild(s);
+  }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"
+  onerror="__loadChartFallback(['https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js','https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js'])"></script>
 <style>
   :root{
     --brand:#3FFECA;
@@ -387,6 +400,20 @@
   .radar-legend .swatch{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
   .radar-wrap{position:relative;height:190px;margin-top:6px;}
 
+  .injury-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:12px;
+    background:rgba(255,107,107,.10);
+    border:1px solid rgba(255,107,107,.28);
+    border-radius:10px;
+    padding:9px 12px;
+  }
+  .injury-badge svg{width:16px;height:16px;color:var(--danger);flex-shrink:0;}
+  .injury-badge span{font-size:12px;color:var(--danger);line-height:1.4;}
+  .injury-badge b{font-weight:700;}
+
   /* ---------- YOUR DEVELOPMENT ---------- */
   .dev-empty{text-align:center;padding:26px 10px 14px;}
   .dev-empty svg{width:30px;height:30px;color:var(--brand-dim);margin-bottom:12px;}
@@ -426,11 +453,6 @@
   }
   .dev-metric-title{font-size:13px;font-weight:600;color:var(--text);}
   .dev-metric-sub{font-size:10.5px;color:var(--text-muted);text-align:right;}
-  .dev-flag-note{
-    font-size:10.5px;
-    color:var(--warn);
-    margin:6px 4px 0;
-  }
   .chart-wrap.small{height:165px;}
 
   .note-block{
@@ -631,6 +653,15 @@
 
   function sessionLabel(s){
     return (s.session || "") + (s.date ? " · " + formatDate(s.date).replace(/ \d{4}$/, "") : "");
+  }
+
+  // Waits (up to ~6s) for the Chart.js global to exist before invoking cb.
+  // Chart.js is now loaded via a dynamically-appended fallback script on
+  // error, so it may not be ready the instant this inline script runs.
+  function whenChartReady(cb, attemptsLeft){
+    attemptsLeft = attemptsLeft === undefined ? 60 : attemptsLeft;
+    if (typeof Chart !== "undefined" || attemptsLeft <= 0){ cb(); return; }
+    setTimeout(function(){ whenChartReady(cb, attemptsLeft - 1); }, 100);
   }
 
   // Per-session squad cohort averages (T/I/S), built from every TF- player's
@@ -860,6 +891,13 @@
           '<span class="item"><span class="swatch" style="background:#3FFECA"></span>' + esc(s.playerName || "Player") + '</span>' +
           '<span class="item"><span class="swatch" style="background:#8CA89A"></span>Session average</span>' +
         '</div>' +
+        (s.gaitFlag === "YES" ?
+          '<div class="injury-badge">' +
+            '<svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A1.5 1.5 0 0 0 3.34 20h17.32a1.5 1.5 0 0 0 1.23-2l-8.18-14.14a1.5 1.5 0 0 0-2.42 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '<span><b>Injury risk flagged</b> — stride asymmetry ' + pct1(s.strideAsymPct) + ' this session' +
+              (isBlank(s.gaitContext) || s.gaitContext === "Normal" ? "" : " (" + esc(s.gaitContext) + ")") + '</span>' +
+          '</div>'
+        : "") +
       '</div>' +
 
       (isBlank(s.sessionNote) ? "" :
@@ -1023,7 +1061,7 @@
         '<div class="dev-empty">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '<p class="dev-empty-title">Development charts appear after session 2</p>' +
-          '<p class="dev-empty-sub">Every session adds a point to your charts. Two-footedness, ball control under pressure, and movement symmetry — tracked over time so you can see whether the work is showing.</p>' +
+          '<p class="dev-empty-sub">Every session adds a point to your charts. Two-footedness and ball control under pressure — tracked over time so you can see whether the work is showing.</p>' +
           '<span class="dev-empty-progress">' + sessionsAsc.length + ' of 2 sessions logged</span>' +
         '</div>';
       return;
@@ -1037,10 +1075,6 @@
       '<div class="dev-metric">' +
         '<div class="dev-metric-head"><span class="dev-metric-title">Ball Control Under Pressure</span><span class="dev-metric-sub">Control on Release % · Ball Control score</span></div>' +
         '<div class="chart-wrap small"><canvas id="dev-control"></canvas></div>' +
-      '</div>' +
-      '<div class="dev-metric">' +
-        '<div class="dev-metric-head"><span class="dev-metric-title">Movement Symmetry</span><span class="dev-metric-sub">Stride Asymmetry %</span></div>' +
-        '<div class="chart-wrap small"><canvas id="dev-gait"></canvas></div>' +
       '</div>';
 
     if (typeof Chart === "undefined") return;
@@ -1115,37 +1149,6 @@
         scales: baseScales(100, true)
       }
     });
-
-    // 3. Movement symmetry: Stride Asymmetry % (points highlighted red when Gait Flag = YES)
-    var strideVals = sessionsAsc.map(function(s){ return isNum(s.strideAsymPct) ? s.strideAsymPct : null; });
-    var flagged = sessionsAsc.map(function(s){ return s.gaitFlag === "YES"; });
-    new Chart(document.getElementById("dev-gait").getContext("2d"), {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "Stride Asymmetry %",
-          data: strideVals,
-          borderColor: "#FFC97A", backgroundColor: "#FFC97A",
-          pointBackgroundColor: flagged.map(function(f){ return f ? "#FF6B6B" : "#FFC97A"; }),
-          pointRadius: flagged.map(function(f){ return f ? 5.5 : 3; }),
-          tension: 0.3, spanGaps: true
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: tooltipOpt },
-        scales: {
-          y: { beginAtZero: true, grid: { color: "rgba(63,254,202,.08)" }, ticks: { color: "#8CA89A", font: { size: 9 }, callback: function(v){ return v + "%"; } } },
-          x: { grid: { display: false }, ticks: { color: "#8CA89A", font: { size: 9 }, maxRotation: 0, autoSkip: true } }
-        }
-      }
-    });
-    if (flagged.some(Boolean)){
-      document.querySelector('#dev-gait').closest(".dev-metric").insertAdjacentHTML(
-        "beforeend", '<p class="dev-flag-note">Red points mark sessions with a gait flag.</p>'
-      );
-    }
   }
 
   function renderHeader(latest){
@@ -1194,9 +1197,21 @@
       card.querySelector(".session-head").addEventListener("click", function(){ toggleCard(card); });
     });
 
-    renderChart(sessionsAsc);
-    renderSessionRadars(sessionsDesc, computeSessionAverages(allSessions || sessions));
-    renderDevSection(sessionsAsc);
+    // Charts render once Chart.js is confirmed available (it may still be
+    // mid-load via the CDN fallback). Each chart section is isolated in its
+    // own try/catch so a failure in one (e.g. a single bad canvas) can't
+    // blank out the others — this is what caused everything past the first
+    // chart to disappear previously.
+    whenChartReady(function(){
+      try { renderChart(sessionsAsc); }
+      catch (e) { console.warn("TIPS Progression chart failed:", e); }
+
+      try { renderSessionRadars(sessionsDesc, computeSessionAverages(allSessions || sessions)); }
+      catch (e) { console.warn("Session radar charts failed:", e); }
+
+      try { renderDevSection(sessionsAsc); }
+      catch (e) { console.warn("Your Development charts failed:", e); }
+    });
   }
 
   // ---------------------------------------------------------------

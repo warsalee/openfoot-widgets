@@ -1,748 +1,1229 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Openfoot · Player Report</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Openfoot — Player Passport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#F5F3EF;--card:#FFFFFF;--border:#E8E4DC;
-  --dark:#07100A;--dark2:#0D1810;
-  --teal-brand:#3FFECA;--red-brand:#F92452;--gold-brand:#DEB020;
-  --section-green:#2A7A62;--section-amber:#A0682A;--section-dark:#1A1A1A;
-  --text:#1A1A1A;--muted:#6B7280;--subtle:#9CA3AF;
-  --green:#2A7A62;--red:#C0392B;--amber:#B8813D;
-  --inter:'Inter',sans-serif;--mono:'DM Mono',monospace;--syne:'Syne',sans-serif;
-}
-body{background:var(--bg);color:var(--text);font-family:var(--inter);font-size:14px;line-height:1.6;padding-bottom:60px}
+  :root{
+    --brand:#3FFECA;
+    --brand-dim:rgba(63,254,202,.55);
+    --brand-soft:rgba(63,254,202,.12);
+    --bg:#07100A;
+    --surface:#0E1B14;
+    --surface-2:#142519;
+    --surface-3:#1A2E20;
+    --border:rgba(63,254,202,.14);
+    --border-strong:rgba(63,254,202,.28);
+    --text:#EAF7F1;
+    --text-muted:#8CA89A;
+    --text-dim:#5C7568;
+    --warn:#FFB84D;
+    --danger:#FF6B6B;
+    --blue:#8FC6FF;
+    --violet:#C9A6FF;
+    --amber:#FFC97A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .display{font-family:'Space Grotesk','Inter',sans-serif;}
 
-/* ── DARK HEADER ── */
-.hdr{background:var(--dark);padding:16px 18px 14px;border-bottom:2px solid var(--teal-brand)}
-.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
-.player-name{font-family:var(--syne);font-weight:800;font-size:26px;color:#EEF2EE;letter-spacing:-.02em;line-height:1}
-.brand{font-family:var(--syne);font-weight:800;font-size:11px;color:var(--teal-brand);letter-spacing:.08em}
-.hdr-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
-.tag{display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,.08);color:#BFC9BE;letter-spacing:.03em}
-.tag.pos{background:rgba(63,254,202,.12);color:var(--teal-brand)}
-.tag.id{font-family:var(--mono);font-size:10px}
+  /* ---------- HEADER ---------- */
+  header.brand-header{
+    background:linear-gradient(180deg,#0A1710 0%,var(--bg) 100%);
+    border-bottom:1px solid var(--border);
+    padding:22px 20px 20px;
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  .brand-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    max-width:560px;
+    margin:0 auto 18px;
+  }
+  .brand-mark{
+    width:30px;height:30px;
+    border-radius:8px;
+    background:var(--brand);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:17px;height:17px;}
+  .brand-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:.04em;
+    color:var(--text);
+    text-transform:uppercase;
+  }
+  .brand-tag{
+    margin-left:auto;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--brand);
+    background:var(--brand-soft);
+    border:1px solid var(--border-strong);
+    padding:4px 9px;
+    border-radius:100px;
+  }
 
-/* ── SESSION SELECTOR ── */
-.sess-bar{background:var(--dark2);padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
-.sess-label{font-family:var(--mono);font-size:9px;color:#3D5240;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
-.sess-select{width:100%;background:#0A1A0D;border:1px solid #1A2C1E;border-radius:4px;padding:8px 12px;color:#EEF2EE;font-family:var(--inter);font-size:12px;font-weight:600;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%233D5240' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.sess-select:focus{outline:none;border-color:var(--teal-brand)}
+  .player-id-card{
+    max-width:560px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .player-avatar{
+    width:56px;height:56px;
+    border-radius:14px;
+    background:var(--surface-2);
+    border:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--brand);
+    flex-shrink:0;
+  }
+  .player-info{min-width:0;flex:1;}
+  .player-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    line-height:1.15;
+    margin:0 0 4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .player-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 10px;
+    font-size:12.5px;
+    color:var(--text-muted);
+  }
+  .player-meta span.sep{color:var(--text-dim);}
+  .player-meta .pid{
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--brand);
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .flag-pill{
+    font-size:10.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding:2px 7px;
+    border-radius:100px;
+  }
+  .flag-pill.warn{background:rgba(255,184,77,.14);color:var(--warn);border:1px solid rgba(255,184,77,.3);}
+  .flag-pill.danger{background:rgba(255,107,107,.14);color:var(--danger);border:1px solid rgba(255,107,107,.3);}
 
-/* ── SECTIONS ── */
-.section{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:12px 14px;overflow:hidden}
-.section-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px 10px;border-bottom:2px solid}
-.section-hdr.green{border-color:var(--section-green);background:#F0FAF6}
-.section-hdr.green .section-title{color:var(--section-green)}
-.section-hdr.amber{border-color:var(--section-amber);background:#FDF7F0}
-.section-hdr.amber .section-title{color:var(--section-amber)}
-.section-hdr.dark{border-color:#333;background:#F8F8F8}
-.section-hdr.dark .section-title{color:var(--section-dark)}
-.section-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.section-body{padding:16px}
+  .hero-score{
+    text-align:right;
+    flex-shrink:0;
+  }
+  .hero-score .val{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:30px;
+    color:var(--brand);
+    line-height:1;
+  }
+  .hero-score .lbl{
+    font-size:10.5px;
+    color:var(--text-muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-top:3px;
+  }
 
-/* ── SESSION PARAGRAPH ── */
-.sess-para{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:12px 14px;padding:16px}
-.sess-para .para-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.sess-para .para-text{font-size:13px;line-height:1.8;color:var(--text)}
-.sess-para .para-priority{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--section-amber);font-weight:600}
-.sess-para .para-priority span{color:var(--muted);font-weight:400}
+  /* ---------- MAIN ---------- */
+  main{
+    max-width:560px;
+    margin:0 auto;
+    padding:22px 16px 60px;
+  }
+  .section-heading{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin:0 0 12px 4px;
+  }
 
-/* ── FOOT BAR ── */
-.foot-bar-wrap{padding:12px 0 8px}
-.foot-labels{display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:6px}
-.foot-labels .left{color:var(--section-green)}
-.foot-labels .right{color:var(--muted)}
-.foot-track{height:10px;border-radius:5px;background:#E8E4DC;overflow:hidden}
-.foot-fill{height:100%;background:var(--section-green);border-radius:5px;transition:width .6s ease}
+  /* ---------- CHART CARD ---------- */
+  .chart-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px 14px 14px;
+    margin-bottom:28px;
+  }
+  .chart-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    padding:0 4px 14px;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .chart-legend .item{display:flex;align-items:center;gap:6px;}
+  .chart-legend .swatch{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+  .chart-wrap{position:relative;height:210px;}
 
-/* ── GAUGES ── */
-.gauges-row{display:flex;justify-content:space-around;margin:12px 0}
-.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
-.gauge-label{font-size:11px;color:var(--muted);text-align:center;max-width:80px}
+  /* ---------- ACCORDION ---------- */
+  .session-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .session-card[data-open="true"]{border-color:var(--border-strong);}
+  .session-head{
+    width:100%;
+    background:none;
+    border:none;
+    padding:15px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    color:inherit;
+    text-align:left;
+    font-family:inherit;
+  }
+  .session-head:active{background:var(--surface-2);}
+  .session-head-main{flex:1;min-width:0;}
+  .session-head-top{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:5px 8px;
+    font-size:13.5px;
+    font-weight:600;
+  }
+  .session-head-top .sep{color:var(--text-dim);font-weight:400;}
+  .session-head-sub{
+    margin-top:3px;
+    font-size:12px;
+    color:var(--text-muted);
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .session-score{
+    text-align:center;
+    flex-shrink:0;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:6px 12px;
+    min-width:56px;
+  }
+  .session-score .v{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:17px;
+    color:var(--brand);
+    line-height:1.1;
+  }
+  .session-score .l{
+    font-size:9px;
+    color:var(--text-muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .chevron{
+    flex-shrink:0;
+    width:18px;height:18px;
+    color:var(--text-muted);
+    transition:transform .2s ease;
+  }
+  .session-card[data-open="true"] .chevron{transform:rotate(180deg);color:var(--brand);}
 
-/* ── METRIC ROWS ── */
-.metric-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
-.metric-row:last-child{border-bottom:none;padding-bottom:0}
-.metric-info{}
-.metric-name{font-size:13px;font-weight:500}
-.metric-desc{font-size:11px;color:var(--muted)}
-.metric-val{font-size:16px;font-weight:700}
-.metric-val.green{color:var(--section-green)}
-.metric-val.red{color:var(--red)}
-.metric-val.amber{color:var(--amber)}
-.metric-val .unit{font-size:11px;font-weight:400;color:var(--muted);margin-left:2px}
+  .session-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .25s ease;
+  }
+  .session-body-inner{
+    padding:2px 16px 18px;
+    border-top:1px solid var(--border);
+  }
 
-/* ── BILATERAL LABEL ── */
-.bilat-label{font-size:13px;font-weight:700}
-.bilat-label.red{color:var(--red)}
-.bilat-label.amber{color:var(--amber)}
-.bilat-label.green{color:var(--section-green)}
+  .stat-section{margin-top:16px;}
+  .stat-section-title{
+    font-size:11.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--brand);
+    margin:0 0 9px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .stat-section-title .pillar-avg{
+    margin-left:auto;
+    color:var(--text-muted);
+    font-weight:600;
+    letter-spacing:0;
+    text-transform:none;
+    font-size:11.5px;
+  }
 
-/* ── DRIFT CARDS ── */
-.drift-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.drift-card{flex:1;background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
-.drift-card .dc-label{font-size:10px;color:var(--muted);margin-bottom:4px}
-.drift-card .dc-val{font-size:20px;font-weight:700;color:var(--text)}
-.drift-card.result{background:#F0FAF6;border-color:rgba(42,122,98,.2)}
-.drift-card.result .dc-val{color:var(--section-green)}
-.drift-card.result.slow{background:#FEF5F4;border-color:rgba(192,57,43,.2)}
-.drift-card.result.slow .dc-val{color:var(--red)}
-.drift-arrow{font-size:20px;color:var(--muted);flex-shrink:0}
-.drift-arrow.down{color:var(--section-green)}
-.drift-arrow.up{color:var(--red)}
-.drift-note{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px;padding:10px;background:#F8F7F4;border-radius:6px}
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  .stat-chip{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 10px;
+  }
+  .stat-chip .lbl{
+    font-size:10.5px;
+    color:var(--text-muted);
+    margin-bottom:2px;
+  }
+  .stat-chip .val{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14.5px;
+    font-weight:600;
+  }
 
-/* ── RV BARS ── */
-.rv-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.rv-label{font-family:var(--mono);font-size:10px;color:var(--muted);width:36px;flex-shrink:0}
-.rv-track{flex:1;height:14px;border-radius:3px;background:#F0EDE8;overflow:hidden}
-.rv-fill{height:100%;border-radius:3px;transition:width .5s ease}
-.rv-count{font-family:var(--mono);font-size:10px;color:var(--muted);width:20px;text-align:right;flex-shrink:0}
-.rv-colors{--z1:#E8E4DC;--z2:#9DB5A9;--z3:var(--section-green);--z4:var(--amber);--z5:var(--red)}
+  .score-chip{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 10px;
+  }
+  .score-chip-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:11.5px;
+    margin-bottom:5px;
+  }
+  .score-chip-row .n{color:var(--text-muted);}
+  .score-chip-row .v{font-weight:700;font-family:'Space Grotesk',sans-serif;}
+  .score-bar{
+    height:5px;
+    background:var(--surface-3);
+    border-radius:100px;
+    overflow:hidden;
+  }
+  .score-bar-fill{
+    height:100%;
+    background:var(--brand);
+    border-radius:100px;
+  }
 
-/* ── TWO CARD ROW ── */
-.two-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.stat-card{background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:14px}
-.stat-card .sc-label{font-size:10px;color:var(--muted);margin-bottom:4px}
-.stat-card .sc-val{font-size:24px;font-weight:700;color:var(--text);line-height:1}
-.stat-card .sc-unit{font-size:13px;font-weight:400;color:var(--muted)}
-.stat-card .sc-note{font-size:10px;color:var(--muted);margin-top:4px}
+  .tips-overview{
+    display:flex;
+    gap:10px;
+    margin-top:4px;
+  }
+  .tips-pillar{
+    flex:1;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 8px;
+    text-align:center;
+  }
+  .tips-pillar .letter{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.05em;
+    margin-bottom:4px;
+  }
+  .tips-pillar .letter.T{color:var(--blue);}
+  .tips-pillar .letter.I{color:var(--violet);}
+  .tips-pillar .letter.S{color:var(--amber);}
+  .tips-pillar .n{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:18px;
+    font-weight:700;
+  }
+  .tips-pillar .name{font-size:9.5px;color:var(--text-muted);margin-top:1px;}
 
-/* ── STRIDE BARS ── */
-.stride-group{margin-bottom:12px}
-.stride-group-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px}
-.stride-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
-.stride-side{font-family:var(--mono);font-size:10px;color:var(--muted);width:32px;flex-shrink:0}
-.stride-track{flex:1;height:12px;border-radius:3px;background:#F0EDE8;overflow:hidden}
-.stride-fill{height:100%;background:var(--section-green);border-radius:3px;transition:width .5s}
-.stride-val{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text);width:60px;text-align:right;flex-shrink:0}
+  .radar-legend{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    margin-top:2px;
+    font-size:10.5px;
+    color:var(--text-muted);
+  }
+  .radar-legend .item{display:flex;align-items:center;gap:5px;}
+  .radar-legend .swatch{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+  .radar-wrap{position:relative;height:190px;margin-top:6px;}
 
-/* ── GAIT STATUS ── */
-.gait-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600}
-.gait-status.ok{background:#E8F5EE;color:var(--section-green)}
-.gait-status.warn{background:#FEF5E7;color:var(--amber)}
-.gait-status.flag{background:#FEF5F4;color:var(--red)}
-.gait-warn{font-size:11px;color:var(--amber);margin-top:8px}
+  /* ---------- YOUR DEVELOPMENT ---------- */
+  .dev-empty{text-align:center;padding:26px 10px 14px;}
+  .dev-empty svg{width:30px;height:30px;color:var(--brand-dim);margin-bottom:12px;}
+  .dev-empty-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    margin:0 0 8px;
+    color:var(--text);
+  }
+  .dev-empty-sub{
+    font-size:12.5px;
+    line-height:1.6;
+    color:var(--text-muted);
+    max-width:340px;
+    margin:0 auto 12px;
+  }
+  .dev-empty-progress{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    color:var(--brand);
+    background:var(--brand-soft);
+    border:1px solid var(--border-strong);
+    padding:4px 11px;
+    border-radius:100px;
+  }
+  .dev-metric{margin-top:20px;}
+  .dev-metric:first-child{margin-top:2px;}
+  .dev-metric-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:8px;
+    margin-bottom:6px;
+    padding:0 4px;
+  }
+  .dev-metric-title{font-size:13px;font-weight:600;color:var(--text);}
+  .dev-metric-sub{font-size:10.5px;color:var(--text-muted);text-align:right;}
+  .dev-flag-note{
+    font-size:10.5px;
+    color:var(--warn);
+    margin:6px 4px 0;
+  }
+  .chart-wrap.small{height:165px;}
 
-/* ── TIPS ── */
-.tips-total{display:flex;align-items:center;gap:16px;margin-bottom:14px}
-.tips-score-big{font-family:var(--mono);font-size:40px;font-weight:500;color:var(--section-green);line-height:1}
-.tips-meta{}
-.tips-meta .tm-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.tips-meta .tm-pos{font-size:13px;font-weight:600}
-.pillars-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.pillar-card{background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
-.pillar-card .pc-val{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;margin-bottom:2px}
-.pillar-card .pc-name{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.crit-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F0EDE8}
-.crit-row:nth-child(odd){padding-right:10px}
-.crit-row:nth-child(even){padding-left:10px;border-left:1px solid #F0EDE8}
-.crit-name{font-size:11px;color:var(--muted)}
-.crit-score{font-family:var(--mono);font-size:12px;font-weight:700}
-.crit-score.red{color:var(--red)}
-.crit-score.amber{color:var(--amber)}
-.crit-score.green{color:var(--section-green)}
+  .note-block{
+    margin-top:16px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-left:3px solid var(--brand-dim);
+    border-radius:10px;
+    padding:12px 13px;
+  }
+  .note-block.priority{border-left-color:var(--warn);}
+  .note-block .k{
+    font-size:10.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--text-muted);
+    margin-bottom:5px;
+    display:block;
+  }
+  .note-block.priority .k{color:var(--warn);}
+  .note-block p{
+    margin:0;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--text);
+  }
 
-/* ── DRILLS ── */
-.drills-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.drill-card{background:#F8F7F4;border:1px solid var(--border);border-radius:8px;padding:12px;text-decoration:none;display:flex;align-items:center;gap:10px;transition:border-color .15s}
-.drill-card:hover{border-color:var(--section-green)}
-.drill-card.priority{border-color:rgba(192,57,43,.25);background:#FEF9F8}
-.drill-icon{font-size:18px;flex-shrink:0}
-.drill-info .dn{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
-.drill-info .dt{font-size:9px;letter-spacing:.06em;text-transform:uppercase}
-.drill-card.priority .dt{color:var(--red)}
-.drill-card:not(.priority) .dt{color:var(--muted)}
-.drill-yt{font-size:10px;color:var(--section-green);margin-top:2px}
+  .empty-state, .loading-state{
+    text-align:center;
+    padding:70px 20px;
+    color:var(--text-muted);
+    font-size:14px;
+  }
+  .loading-state .spinner{
+    width:26px;height:26px;
+    border-radius:50%;
+    border:2.5px solid var(--surface-3);
+    border-top-color:var(--brand);
+    margin:0 auto 14px;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── GENERATE REPORT ── */
-.gen-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 28px);margin:16px 14px 0;padding:12px;background:var(--section-green);color:white;border:none;border-radius:8px;font-family:var(--inter);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.03em;transition:opacity .2s}
-.gen-btn:hover{opacity:.9}
-
-/* ── LOADING / ERROR ── */
-.loading{padding:48px 20px;text-align:center;color:var(--muted);font-size:12px}
-.spin{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--section-green);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── PRINT ── */
-@media print{
-  .sess-bar,.hdr-tags,.gen-btn,.sess-select,.sess-label{display:none}
-  .section,.sess-para{border:1px solid #ddd;margin:6px 0}
-  body{background:white;padding:0}
-  .hdr{background:#1A1A1A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-}
+  footer{
+    max-width:560px;
+    margin:0 auto;
+    padding:6px 20px 30px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11px;
+    line-height:1.6;
+  }
+  footer .fmark{color:var(--brand-dim);font-weight:600;}
 </style>
 </head>
 <body>
 
-<div id="app"><div class="loading"><div class="spin"></div>Loading your data...</div></div>
+<header class="brand-header">
+  <div class="brand-row">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L20 6.5V13.5C20 18 16.5 21.2 12 22C7.5 21.2 4 18 4 13.5V6.5L12 2Z" fill="#07100A"/>
+        <path d="M12 6.5L9 9.5V13L12 15L15 13V9.5L12 6.5Z" fill="#3FFECA"/>
+      </svg>
+    </div>
+    <span class="brand-name">Openfoot</span>
+    <span class="brand-tag">Passport</span>
+  </div>
+
+  <div class="player-id-card" id="playerHeader" style="display:none;">
+    <div class="player-avatar" id="avatarInitial">–</div>
+    <div class="player-info">
+      <p class="player-name" id="playerName">—</p>
+      <div class="player-meta" id="playerMeta"></div>
+    </div>
+    <div class="hero-score">
+      <div class="val" id="heroScore">—</div>
+      <div class="lbl">Latest TIPS</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="loadingState" class="loading-state">
+    <div class="spinner"></div>
+    Loading player passport…
+  </div>
+
+  <div id="emptyState" class="empty-state" style="display:none;"></div>
+
+  <div id="content" style="display:none;">
+    <p class="section-heading">TIPS Progression</p>
+    <div class="chart-card">
+      <div class="chart-legend" id="chartLegend"></div>
+      <div class="chart-wrap"><canvas id="tipsChart"></canvas></div>
+    </div>
+
+    <p class="section-heading">Your Development</p>
+    <div class="chart-card" id="devCard"></div>
+
+    <p class="section-heading">Sessions</p>
+    <div id="sessionList"></div>
+  </div>
+</main>
+
+<footer>
+  Openfoot Player Passport · TIPS framework inspired by the work of Ajax, adapted to Openfoot's context.<br>
+  <span class="fmark">T</span>echnique · <span class="fmark">I</span>nsight · <span class="fmark">P</span>ersonality · <span class="fmark">S</span>peed
+</footer>
 
 <script>
-const SHEET_ID='1NWW6oiUrYKFtOqGSeotlhy8kqwwK5mRcssbSXpOn4bo';
+(function(){
+  "use strict";
 
-// ── Drill library ──────────────────────────────────────────────────────
-const DRILLS={
-  'Ball Control':{icon:'🎯',yt:'https://www.youtube.com/results?search_query=ball+control+drills+football'},
-  'Passing':{icon:'↗️',yt:'https://www.youtube.com/results?search_query=passing+accuracy+drills+football'},
-  'Receiving':{icon:'📥',yt:'https://www.youtube.com/results?search_query=first+touch+receiving+football'},
-  'Dribbling':{icon:'⚡',yt:'https://www.youtube.com/results?search_query=dribbling+1v1+football+drills'},
-  'Finishing':{icon:'🥅',yt:'https://www.youtube.com/results?search_query=finishing+shooting+drills+football'},
-  'Both Feet':{icon:'👟',yt:'https://www.youtube.com/results?search_query=weak+foot+training+football'},
-  'Scanning':{icon:'👁️',yt:'https://www.youtube.com/results?search_query=scanning+awareness+football'},
-  'Decision Speed':{icon:'🧠',yt:'https://www.youtube.com/results?search_query=quick+decision+football+drills'},
-  'Spatial Play':{icon:'🗺️',yt:'https://www.youtube.com/results?search_query=positional+play+football'},
-  'Positioning':{icon:'📍',yt:'https://www.youtube.com/results?search_query=football+positioning+movement'},
-  'Speed':{icon:'🏃',yt:'https://www.youtube.com/results?search_query=speed+agility+football+training'},
-  'Agility':{icon:'🔄',yt:'https://www.youtube.com/results?search_query=agility+football+training'},
-  'Endurance':{icon:'💪',yt:'https://www.youtube.com/results?search_query=football+endurance+training'},
-  'Recovery':{icon:'⏱️',yt:'https://www.youtube.com/results?search_query=football+recovery+fitness'},
-};
+  // ---------------------------------------------------------------
+  // CONFIG
+  // ---------------------------------------------------------------
+  var SHEET_ID = "1NWW6oiUrYKFtOqGSeotlhy8kqwwK5mRcssbSXpOn4bo";
+  var TAB_NAME = "PM Session Data";
+  var ID_FILTER_PREFIX = "TF-";
 
-// ── JSONP ──────────────────────────────────────────────────────────────
-let _c=0;
-function jsonp(tab,range,done,fail){
-  const n='_pw'+Date.now()+(_c++);
-  const t=setTimeout(()=>{delete window[n];fail(new Error('Timeout'));},10000);
-  window[n]=r=>{clearTimeout(t);delete window[n];r.status==='ok'?done(r.table):fail(new Error('Sheet error'));};
-  const s=document.createElement('script');
-  const rangeParam=range?`&range=${encodeURIComponent(range)}`:'';
-  s.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${n}&sheet=${encodeURIComponent(tab)}${rangeParam}`;
-  s.onerror=()=>{clearTimeout(t);delete window[n];fail(new Error('Script blocked'));};
-  document.head.appendChild(s);
-}
+  // 0-indexed column map, derived directly from the live header row
+  // (row 5 = group labels, row 6 = column headers, data from row 7... in
+  // 1-indexed sheet terms this is header row 5, data starting row 6).
+  var COL = {
+    session:0, date:1, playerId:2, playerName:3, positionPlayed:4, team:5,
+    positionChange:6, injuryFlag:7, primaryPosition:8,
+    touches:9, touchesPerMin:10, leftPct:11, rightPct:12, bilateral:13,
+    oneTouchPct:14, shortAvgS:15, longAvgS:16,
+    ctrlReleasePct:17, maxRV:18, rvZ1:19, rvZ2:20, rvZ3:21, rvZ4:22, rvZ5:23,
+    rvZ6:24, driftRatio:25, release1H:26, release2H:27,
+    crossFootPct:28, codIntelPct:29, dirAsymPct:30, tactEcoM:31,
+    totalDistM:32, topSpeed:33, workRate:34, hsc:35, sprints:36, strideAsymPct:37,
+    gaitFlag:38, gaitContext:39,
+    ballControl:40, passing:41, receiving:42, dribbling:43, finishing:44,
+    bothFeet:45, tAvg:46,
+    scanning:47, decisionSpeed:48, spatialPlay:49, positioning:50, iAvg:51,
+    speed:52, agility:53, endurance:54, recovery:55, sAvg:56,
+    tipsScore:57, sessionNote:58, devPriority:59,
+    succPasses:60, passCompletionPct:61, lostPossessions:62, regains:63,
+    shortPossessions:64, shortPossPct:65, longPossessions:66, longPossPct:67,
+    accZone6:68, receives:69, rvAvg:70
+  };
 
-// ── Parse helpers ──────────────────────────────────────────────────────
-function gv(row,i){if(!row.c||row.c[i]==null)return null;const v=row.c[i];return v&&v.v!=null?v.v:null;}
-function gs(row,i){const v=gv(row,i);return v!=null?String(v):''}
-function gn(row,i){const v=gv(row,i);if(v==null)return null;const n=parseFloat(v);return isNaN(n)?null:n;}
+  // ---------------------------------------------------------------
+  // UTIL
+  // ---------------------------------------------------------------
+  function qs(name){
+    var m = new URLSearchParams(window.location.search).get(name);
+    return m ? m.trim() : null;
+  }
 
+  function isNum(v){ return typeof v === "number" && isFinite(v); }
 
+  function n1(v){ return isNum(v) ? v.toFixed(1) : "—"; }
+  function n0(v){ return isNum(v) ? Math.round(v).toString() : "—"; }
+  function pct1(v){ return isNum(v) ? v.toFixed(1) + "%" : "—"; }
 
-// ── SVG Gauge ──────────────────────────────────────────────────────────
-function gauge(value,max,color,displayVal,unit,size=100){
-  const pct=Math.min(Math.max((value||0)/max,0),1);
-  const arc=157;
-  const offset=arc*(1-pct);
-  const sw=8;
-  return`<svg viewBox="0 0 120 75" width="${size}" height="${Math.round(size*0.65)}">
-    <path d="M 10 65 A 50 50 0 0 1 110 65" stroke="#E8E4DC" stroke-width="${sw}" fill="none" stroke-linecap="round"/>
-    <path d="M 10 65 A 50 50 0 0 1 110 65" stroke="${color}" stroke-width="${sw}" fill="none"
-          stroke-linecap="round" stroke-dasharray="${arc}" stroke-dashoffset="${offset.toFixed(1)}" style="transition:stroke-dashoffset .6s ease"/>
-    <text x="60" y="57" text-anchor="middle" font-family="DM Mono,monospace" font-size="17" font-weight="700" fill="#1A1A1A">${displayVal}</text>
-    <text x="60" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9CA3AF">${unit}</text>
-  </svg>`;
-}
+  function isBlank(v){
+    return v === null || v === undefined || v === "" ||
+      (typeof v === "string" && (v.trim() === "" || v.trim() === "—"));
+  }
 
-// ── Colors ─────────────────────────────────────────────────────────────
-function bilatColor(v){return v>=0.20?'#2A7A62':v>=0.10?'#B8813D':'#C0392B';}
-function bilatLabel(v){return v>=0.20?'Balanced':v>=0.10?'Developing':'Dominant';}
-function tipsColor(v){return v>=6.8?'#2A7A62':v>=5.8?'#B8813D':'#C0392B';}
-function critColor(v){return v>=8?'green':v<=5?'red':v<=6?'amber':'';}
-function critColorHex(v){return v>=8?'#2A7A62':v<=5?'#C0392B':v<=6?'#B8813D':'#1A1A1A';}
+  function parseSheetDate(raw){
+    if (isBlank(raw)) return null;
+    if (typeof raw === "string" && raw.indexOf("Date(") === 0){
+      var m = raw.match(/Date\((\d+),(\d+),(\d+)/);
+      if (m) return new Date(+m[1], +m[2], +m[3]);
+    }
+    if (typeof raw === "string"){
+      var parts = raw.split("/");
+      if (parts.length === 3){
+        var d = +parts[0], mo = +parts[1], y = +parts[2];
+        if (d && mo && y) return new Date(y, mo - 1, d);
+      }
+    }
+    var fallback = new Date(raw);
+    return isNaN(fallback.getTime()) ? null : fallback;
+  }
 
-// ── Build gauge row ────────────────────────────────────────────────────
-function gaugeRow(bilateral,otp,tpm){
-  const bv=bilateral||0;
-  const bc=bilatColor(bv);
-  const g1=gauge(bv,0.25,bc,bv!=null?bv.toFixed(3):'—','/0.25');
-  const g2=gauge(otp||0,100,'#2A7A62',otp!=null?otp.toFixed(1):'—','%');
-  const g3=gauge(tpm||0,6,'#2A7A62',tpm!=null?tpm.toFixed(2):'—','/min');
-  return`<div class="gauges-row">
-    <div class="gauge-wrap">${g1}<div class="gauge-label">Bilateral</div></div>
-    <div class="gauge-wrap">${g2}<div class="gauge-label">One-Touch %</div></div>
-    <div class="gauge-wrap">${g3}<div class="gauge-label">Touches/min</div></div>
-  </div>`;
-}
+  function formatDate(dt){
+    if (!dt) return "—";
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return dt.getDate() + " " + months[dt.getMonth()] + " " + dt.getFullYear();
+  }
 
-// ── RV bar ─────────────────────────────────────────────────────────────
-function rvBars(z1,z2,z3,z4,z5,z6){
-  const total=(z1||0)+(z2||0)+(z3||0)+(z4||0)+(z5||0)+(z6||0)||1;
-  const zones=[
-    {r:'0–5',v:z1||0,c:'#E8E4DC'},
-    {r:'5–10',v:z2||0,c:'#9DB5A9'},
-    {r:'10–15',v:z3||0,c:'#2A7A62'},
-    {r:'15–20',v:z4||0,c:'#B8813D'},
-    {r:'20–25',v:z5||0,c:'#C0392B'},
-    {r:'25+',v:z6||0,c:'#7B1D1D'},
-  ];
-  return`<div style="margin-top:12px">
-    <div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:8px">Release Velocity Distribution (m/s)</div>
-    ${zones.map(z=>`<div class="rv-bar-row">
-      <div class="rv-label">${z.r}</div>
-      <div class="rv-track"><div class="rv-fill" style="width:${(z.v/total*100).toFixed(0)}%;background:${z.c}"></div></div>
-      <div class="rv-count">${z.v}</div>
-    </div>`).join('')}
-  </div>`;
-}
+  function esc(s){
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
 
-// ── Stride bars ────────────────────────────────────────────────────────
-function strideBars(label,leftVal,rightVal,unit,maxVal){
-  if(!leftVal&&!rightVal)return'';
-  const lp=(leftVal/maxVal*100).toFixed(0);
-  const rp=(rightVal/maxVal*100).toFixed(0);
-  const diff=leftVal&&rightVal?Math.abs(leftVal-rightVal)/Math.max(leftVal,rightVal)*100:0;
-  return`<div class="stride-group">
-    <div class="stride-group-title">${label}</div>
-    <div class="stride-row">
-      <div class="stride-side">LEFT</div>
-      <div class="stride-track"><div class="stride-fill" style="width:${lp}%"></div></div>
-      <div class="stride-val">${leftVal?.toFixed(1)||'—'}${unit?'<span style="font-size:9px;color:#9CA3AF"> '+unit+'</span>':''}</div>
-    </div>
-    <div class="stride-row">
-      <div class="stride-side">RIGHT</div>
-      <div class="stride-track"><div class="stride-fill" style="width:${rp}%"></div></div>
-      <div class="stride-val">${rightVal?.toFixed(1)||'—'}${unit?'<span style="font-size:9px;color:#9CA3AF"> '+unit+'</span>':''}</div>
-    </div>
-    ${diff>5?`<div class="gait-warn">⚠ ${diff.toFixed(0)}% difference between sides</div>`:''}
-  </div>`;
-}
+  function avg(arr){
+    return arr.length ? arr.reduce(function(a,b){ return a+b; }, 0) / arr.length : null;
+  }
 
-// ── Priority drills ────────────────────────────────────────────────────
-function drillCards(data){
-  const priority=[];
-  const secondary=[];
-  const criteria=[
-    {name:'Both Feet',score:data.t6},
-    {name:'Scanning',score:data.i1},
-    {name:'Decision Speed',score:data.i2},
-    {name:'Ball Control',score:data.t1},
-    {name:'Receiving',score:data.t3},
-    {name:'Positioning',score:data.i4},
-  ];
-  criteria.forEach(c=>{
-    if(c.score!=null&&c.score<=5)priority.push({name:c.name,priority:true});
-    else if(c.score!=null&&c.score<=6)secondary.push({name:c.name,priority:false});
-  });
-  const all=[...priority,...secondary].slice(0,6);
-  if(!all.length)all.push({name:'Both Feet',priority:false},{name:'Decision Speed',priority:false},{name:'Positioning',priority:false});
-  return`<div class="drills-grid">${all.map(d=>{
-    const info=DRILLS[d.name]||{icon:'📋',yt:'https://youtube.com'};
-    return`<a class="drill-card ${d.priority?'priority':''}" href="${info.yt}" target="_blank" rel="noopener">
-      <div class="drill-icon">${info.icon}</div>
-      <div class="drill-info">
-        <div class="dn">${d.name}</div>
-        <div class="dt">${d.priority?'🔴 Priority':'Development'}</div>
-        <div class="drill-yt">▶ Watch drills</div>
-      </div>
-    </a>`;
-  }).join('')}</div>`;
-}
+  function sessionLabel(s){
+    return (s.session || "") + (s.date ? " · " + formatDate(s.date).replace(/ \d{4}$/, "") : "");
+  }
 
-// ── Render one session ─────────────────────────────────────────────────
-function renderSession(d,prevTips){
-  const bv=d.bilateral||0;
-  const bColor=bilatColor(bv);
-  const bLabel=bilatLabel(bv);
-  const drift=d.drift;
-  const driftFaster=drift!=null&&drift<1.0;
-  const driftSlower=drift!=null&&drift>1.1;
-  const gaitPct=d.strideAsym||0;
-  const gaitOk=gaitPct<10||(d.gaitFlag&&String(d.gaitFlag).toLowerCase().includes('gk'));
-  const tipsScore=d.tips;
-  const tipsDelta=tipsScore!=null&&prevTips!=null?tipsScore-prevTips:null;
+  // Per-session squad cohort averages (T/I/S), built from every TF- player's
+  // row for that session — used as the "team" comparison in the radar chart.
+  function computeSessionAverages(allSessions){
+    var groups = {};
+    allSessions.forEach(function(s){
+      if (!s.session) return;
+      if (!groups[s.session]) groups[s.session] = { tAvg: [], iAvg: [], sAvg: [] };
+      if (isNum(s.tAvg)) groups[s.session].tAvg.push(s.tAvg);
+      if (isNum(s.iAvg)) groups[s.session].iAvg.push(s.iAvg);
+      if (isNum(s.sAvg)) groups[s.session].sAvg.push(s.sAvg);
+    });
+    var out = {};
+    Object.keys(groups).forEach(function(k){
+      var g = groups[k];
+      out[k] = { tAvg: avg(g.tAvg), iAvg: avg(g.iAvg), sAvg: avg(g.sAvg), n: g.tAvg.length };
+    });
+    return out;
+  }
 
-  return`
-    <!-- SESSION PARAGRAPH -->
-    ${d.sessionNote?`<div class="sess-para">
-      <div class="para-label">Your Session</div>
-      <div class="para-text">${d.sessionNote}</div>
-      ${d.devPriority?`<div class="para-priority"><span>Work on: </span>${d.devPriority}</div>`:''}
-    </div>`:''}
+  // ---------------------------------------------------------------
+  // JSONP LOADER (Google Visualization API)
+  // ---------------------------------------------------------------
+  function loadSheet(callback, onError){
+    var url = "https://docs.google.com/spreadsheets/d/" + SHEET_ID +
+      "/gviz/tq?tqx=out:json&headers=0&sheet=" + encodeURIComponent(TAB_NAME);
 
-    <!-- BALL MASTERY -->
-    <div class="section">
-      <div class="section-hdr green">
-        <div class="section-title">Ball Mastery</div>
-      </div>
-      <div class="section-body">
-        <div class="foot-bar-wrap">
-          <div class="foot-labels">
-            <span class="left">LEFT ${d.leftPct!=null?d.leftPct.toFixed(1):0}%</span>
-            <span class="right">RIGHT ${d.rightPct!=null?d.rightPct.toFixed(1):100}%</span>
-          </div>
-          <div class="foot-track"><div class="foot-fill" style="width:${d.leftPct||0}%"></div></div>
-        </div>
-        ${gaugeRow(d.bilateral,d.otp,d.tpm)}
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Avg release time (short possession)</div>
-            <div class="metric-desc">Decision speed under pressure</div>
-          </div>
-          <div class="metric-val">${d.shortAvg!=null?d.shortAvg.toFixed(2):'—'}<span class="unit">sec</span></div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Avg time on ball (long possession)</div>
-            <div class="metric-desc">Ball retention quality</div>
-          </div>
-          <div class="metric-val">${d.longAvg!=null?d.longAvg.toFixed(2):'—'}<span class="unit">sec</span></div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info"><div class="metric-name">Bilateral score</div></div>
-          <div class="bilat-label ${bv>=0.20?'green':bv>=0.10?'amber':'red'}">${bv.toFixed(3)} — ${bLabel}</div>
-        </div>
-      </div>
-    </div>
+    window.google = window.google || {};
+    window.google.visualization = window.google.visualization || {};
+    window.google.visualization.Query = window.google.visualization.Query || {};
+    window.google.visualization.Query.setResponse = function(json){ callback(json); };
 
-    <!-- DECISION MAKING -->
-    <div class="section">
-      <div class="section-hdr green">
-        <div class="section-title">Decision Making & Intelligence</div>
-      </div>
-      <div class="section-body">
-        <div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:8px">Release Tempo Drift</div>
-        <div class="drift-row">
-          <div class="drift-card">
-            <div class="dc-label">1st Half</div>
-            <div class="dc-val">${d.rel1h!=null?d.rel1h.toFixed(3)+'s':'—'}</div>
-          </div>
-          <div class="drift-arrow ${driftFaster?'down':driftSlower?'up':''}">
-            ${driftFaster?'↓':driftSlower?'↑':'→'}
-          </div>
-          <div class="drift-card">
-            <div class="dc-label">2nd Half</div>
-            <div class="dc-val">${d.rel2h!=null?d.rel2h.toFixed(3)+'s':'—'}</div>
-          </div>
-          <div style="font-size:8px;color:#9CA3AF;padding:0 2px">→</div>
-          <div class="drift-card result ${driftSlower?'slow':''}">
-            <div class="dc-label">Drift</div>
-            <div class="dc-val">${drift!=null?drift.toFixed(2):'—'}</div>
-            ${drift!=null?`<div style="font-size:9px;font-weight:600;color:${driftFaster?'#2A7A62':driftSlower?'#C0392B':'#6B7280'}">${driftFaster?'FASTER':driftSlower?'SLOWER':'STABLE'}</div>`:''}
-          </div>
-        </div>
-        <div class="drift-note">A ratio below 1.0 means faster decisions in the 2nd half — a positive sign of sharpness under fatigue.</div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">COD Intelligence</div>
-            <div class="metric-desc">Turns made without the ball — off-ball movement</div>
-          </div>
-          <div class="metric-val ${d.codIntel!=null&&d.codIntel>=85?'green':''}">
-            ${d.codIntel!=null?d.codIntel.toFixed(1):'—'}<span class="unit">%</span>
-          </div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Directional Asymmetry</div>
-            <div class="metric-desc">L vs R turn balance — lower is better</div>
-          </div>
-          <div class="metric-val ${d.dirAsym!=null&&d.dirAsym<10?'green':d.dirAsym!=null&&d.dirAsym>20?'amber':''}">
-            ${d.dirAsym!=null?d.dirAsym.toFixed(1):'—'}<span class="unit">%</span>
-          </div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Cross-Foot Execution</div>
-            <div class="metric-desc">Possessions received and released on different feet</div>
-          </div>
-          <div class="metric-val ${d.crossFoot!=null&&d.crossFoot>=20?'green':d.crossFoot!=null&&d.crossFoot<10?'red':'amber'}">
-            ${d.crossFoot!=null?d.crossFoot.toFixed(1):'—'}<span class="unit">%</span>
-          </div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Tactical Economy</div>
-            <div class="metric-desc">Distance covered per ball contact — lower = smarter positioning</div>
-          </div>
-          <div class="metric-val">
-            ${d.tactEco!=null?d.tactEco.toFixed(0):'—'}<span class="unit">m/touch</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    var script = document.createElement("script");
+    script.src = url;
+    script.onerror = function(){ onError && onError(); };
+    document.body.appendChild(script);
+  }
 
-    <!-- TECHNICAL QUALITY -->
-    <div class="section">
-      <div class="section-hdr amber">
-        <div class="section-title">Technical Quality</div>
-      </div>
-      <div class="section-body">
-        <div class="two-cards">
-          <div class="stat-card">
-            <div class="sc-label">Controlled Release</div>
-            <div class="sc-val">${d.ctrlRel!=null?d.ctrlRel.toFixed(1):'—'}<span class="sc-unit">%</span></div>
-            <div class="sc-note">Inside foot zone</div>
-          </div>
-          <div class="stat-card">
-            <div class="sc-label">Max Release Velocity</div>
-            <div class="sc-val">${d.maxRV!=null?d.maxRV.toFixed(1):'—'}<span class="sc-unit">km/h</span></div>
-            <div class="sc-note">Peak kicking power</div>
-          </div>
-        </div>
-        ${rvBars(d.rvZ1,d.rvZ2,d.rvZ3,d.rvZ4,d.rvZ5,d.rvZ6)}
-      </div>
-    </div>
+  // ---------------------------------------------------------------
+  // PARSE
+  // ---------------------------------------------------------------
+  function rowToArray(row){
+    if (!row || !row.c) return [];
+    return row.c.map(function(cell){ return cell ? cell.v : null; });
+  }
 
-    <!-- PHYSICAL LOAD -->
-    <div class="section">
-      <div class="section-hdr dark">
-        <div class="section-title">Physical Load</div>
-      </div>
-      <div class="section-body">
-        <div class="two-cards">
-          <div class="stat-card">
-            <div class="sc-label">Total Distance</div>
-            <div class="sc-val">${d.totalDist!=null?(d.totalDist/1000).toFixed(2):'—'}<span class="sc-unit">km</span></div>
-            ${d.sessionDuration?`<div class="sc-note">${d.sessionDuration} min</div>`:''}
-          </div>
-          <div class="stat-card">
-            <div class="sc-label">Top Speed</div>
-            <div class="sc-val">${d.topSpeed!=null?d.topSpeed.toFixed(1):'—'}<span class="sc-unit">km/h</span></div>
-            <div class="sc-note">Session maximum</div>
-          </div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Work Rate</div>
-            <div class="metric-desc">Distance covered per minute</div>
-          </div>
-          <div class="metric-val">${d.wr!=null?d.wr.toFixed(1):'—'}<span class="unit">m/min</span></div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">High Speed Changes (HSC)</div>
-            <div class="metric-desc">Explosive acceleration &amp; deceleration events</div>
-          </div>
-          <div class="metric-val">${d.hsc!=null?d.hsc:'—'}</div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Sprint Count</div>
-            <div class="metric-desc">Max effort runs during session</div>
-          </div>
-          <div class="metric-val">${d.sprints!=null?d.sprints:'—'}</div>
-        </div>
-      </div>
-    </div>
+  function parseTable(json){
+    if (!json || !json.table || !json.table.rows) return [];
+    var rawRows = json.table.rows.map(rowToArray);
 
-    <!-- BIOMECHANICS -->
-    <div class="section">
-      <div class="section-hdr green">
-        <div class="section-title">Biomechanics</div>
-      </div>
-      <div class="section-body">
-        <div class="metric-row">
-          <div class="metric-info">
-            <div class="metric-name">Gait Asymmetry Index <strong style="color:${gaitOk?'#2A7A62':gaitPct>15?'#C0392B':'#B8813D'}">${gaitPct>0?gaitPct.toFixed(1)+'%':'—'}</strong></div>
-            ${d.gaitContext?`<div class="metric-desc">${d.gaitContext}</div>`:''}
-          </div>
-          <div class="gait-status ${gaitOk?'ok':gaitPct>15?'flag':'warn'}">
-            ${gaitOk?'✓ Within normal range':gaitPct>15?'⚠ Review recommended':'⚠ Monitor'}
-          </div>
-        </div>
-        ${strideBars('Stride Cadence (steps/min)',d.cadenceL,d.cadenceR,'',160)}
-        ${strideBars('Stride Length (cm)',d.strideL,d.strideR,'cm',160)}
-      </div>
-    </div>
+    // Locate the real header row (label 'Player ID' in column index 2)
+    // rather than assuming a fixed offset — more robust to sheet edits.
+    var headerIdx = -1;
+    for (var i = 0; i < rawRows.length; i++){
+      if (rawRows[i][COL.playerId] === "Player ID"){ headerIdx = i; break; }
+    }
+    var dataRows = headerIdx >= 0 ? rawRows.slice(headerIdx + 1) : rawRows.slice(5);
 
-    <!-- TIPS -->
-    <div class="section">
-      <div class="section-hdr amber">
-        <div class="section-title">TIPS Rating</div>
-      </div>
-      <div class="section-body">
-        <div class="tips-total">
-          <div class="tips-score-big" style="color:${tipsScore!=null?tipsColor(tipsScore):'#9CA3AF'}">${tipsScore!=null?tipsScore.toFixed(2):'—'}</div>
-          <div class="tips-meta">
-            <div class="tm-label">Overall TIPS</div>
-            <div class="tm-pos">${d.position||'—'}</div>
-            ${tipsDelta!=null?`<div style="font-size:11px;color:${tipsDelta>0.05?'#2A7A62':tipsDelta<-0.05?'#C0392B':'#9CA3AF'};margin-top:2px">
-              ${tipsDelta>0.05?'▲':tipsDelta<-0.05?'▼':'→'} ${tipsDelta>=0?'+':''}${tipsDelta.toFixed(2)} vs last session
-            </div>`:''}
-          </div>
-        </div>
-        <div class="pillars-row">
-          <div class="pillar-card">
-            <div class="pc-val" style="color:#2A7A62">${d.tAvg!=null?d.tAvg.toFixed(1):'—'}</div>
-            <div class="pc-name">Technique</div>
-          </div>
-          <div class="pillar-card">
-            <div class="pc-val" style="color:#B8813D">${d.iAvg!=null?d.iAvg.toFixed(1):'—'}</div>
-            <div class="pc-name">Intelligence</div>
-          </div>
-          <div class="pillar-card">
-            <div class="pc-val" style="color:#6B7280">${d.sAvg!=null?d.sAvg.toFixed(1):'—'}</div>
-            <div class="pc-name">Physical</div>
-          </div>
-        </div>
-        <div class="criteria-grid">
-          ${[
-            ['Ball Control',d.t1],['Passing',d.t2],
-            ['Receiving',d.t3],['Dribbling',d.t4],
-            ['Finishing',d.t5],['Both Feet',d.t6],
-            ['Scanning',d.i1],['Decision Speed',d.i2],
-            ['Spatial Play',d.i3],['Positioning',d.i4],
-            ['Speed',d.s1],['Agility',d.s2],
-            ['Endurance',d.s3],['Recovery',d.s4],
-          ].map(([name,score])=>`
-            <div class="crit-row">
-              <div class="crit-name">${name}</div>
-              <div class="crit-score ${score!=null?critColor(score):''}" style="color:${score!=null?critColorHex(score):'#9CA3AF'}">${score!=null?score:'—'}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    </div>
+    var sessions = [];
+    dataRows.forEach(function(row){
+      var pid = row[COL.playerId];
+      if (isBlank(pid) || typeof pid !== "string" || pid.indexOf(ID_FILTER_PREFIX) !== 0) return;
 
-    <!-- DRILLS -->
-    <div class="section">
-      <div class="section-hdr dark">
-        <div class="section-title">Work on these between sessions</div>
-      </div>
-      <div class="section-body">${drillCards(d)}</div>
-    </div>
-  `;
-}
+      var note = row[COL.sessionNote];
+      var priority = row[COL.devPriority];
+      var endurance = row[COL.endurance];
+      var recovery = row[COL.recovery];
 
-// ── Parse PM Session Data ──────────────────────────────────────────────
-// Sheet structure (column indices, 0-based):
-// 0=Session  1=Date  2=PlayerID  3=Name  4=Position  5=Team
-// 6=PosChange  7=InjuryFlag  8=PrimaryPos
-// 9=Touches  10=TPM  11=Left%  12=Right%  13=Bilateral  14=OneTouch%  15=ShortAvg  16=LongAvg
-// 17=CtrlRel  18=MaxRV  19=Z1  20=Z2  21=Z3  22=Z4  23=Z5  24=Z6
-// 25=Drift  26=Rel1H  27=Rel2H  28=CrossFoot  29=COD  30=DirAsym  31=TactEco
-// 32=TotalDist  33=TopSpeed  34=WR  35=HSC  36=Sprints
-// 37=StrideAsym  38=GaitFlag  39=GaitCtx
-// 40=BC  41=Pass  42=Recv  43=Drib  44=Finish  45=BothFeet  46=TAVG
-// 47=Scan  48=DecSpeed  49=Spatial  50=Pos  51=IAVG
-// 52=Speed  53=Agility  54=Endurance  55=Recovery  56=SAVG
-// 57=TIPS  58=SessionNote  59=DevPriority
-function parsePM(tbl){
-  return (tbl.rows||[])
-    .filter(r=>{
-      // Only keep real data rows: col 2 (Player ID) must start with TF-
-      // This naturally skips title rows, description rows, and header rows
-      const pid=gs(r,2);
-      return pid&&pid.toUpperCase().startsWith('TF-');
-    })
-    .map(r=>({
-      pid:gs(r,2).toUpperCase().trim(),
-      session:gs(r,0),date:gs(r,1),name:gs(r,3),
-      position:gs(r,4),team:gs(r,5),
-      posChange:gs(r,6),injuryFlag:gs(r,7),
-      touches:gn(r,9),tpm:gn(r,10),
-      leftPct:gn(r,11),rightPct:gn(r,12),
-      bilateral:gn(r,13),otp:gn(r,14),
-      shortAvg:gn(r,15),longAvg:gn(r,16),
-      ctrlRel:gn(r,17),maxRV:gn(r,18),
-      rvZ1:gn(r,19),rvZ2:gn(r,20),rvZ3:gn(r,21),
-      rvZ4:gn(r,22),rvZ5:gn(r,23),rvZ6:gn(r,24),
-      drift:gn(r,25),rel1h:gn(r,26),rel2h:gn(r,27),
-      crossFoot:gn(r,28),codIntel:gn(r,29),
-      dirAsym:gn(r,30),tactEco:gn(r,31),
-      totalDist:gn(r,32),topSpeed:gn(r,33),
-      wr:gn(r,34),hsc:gn(r,35),sprints:gn(r,36),
-      strideAsym:gn(r,37),gaitFlag:gs(r,38),gaitContext:gs(r,39),
-      t1:gn(r,40),t2:gn(r,41),t3:gn(r,42),
-      t4:gn(r,43),t5:gn(r,44),t6:gn(r,45),
-      tAvg:gn(r,46),
-      i1:gn(r,47),i2:gn(r,48),i3:gn(r,49),i4:gn(r,50),
-      iAvg:gn(r,51),
-      s1:gn(r,52),s2:gn(r,53),s3:gn(r,54),s4:gn(r,55),
-      sAvg:gn(r,56),
-      tips:gn(r,57),
-      sessionNote:gs(r,58),
-      devPriority:gs(r,59),
-      cadenceL:null,cadenceR:null,strideL:null,strideR:null,
-    }));
-}
-
-// ── Main ───────────────────────────────────────────────────────────────
-const params=new URLSearchParams(location.search);
-const PID=(params.get('id')||'').toUpperCase().trim();
-
-if(!PID){
-  document.getElementById('app').innerHTML=`<div class="loading">
-    <div style="font-size:28px;margin-bottom:12px">🔗</div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:6px">No player ID in URL</div>
-    <div style="color:#6B7280">Add your player ID:<br><code style="color:#2A7A62">?id=TF-VP-001</code></div>
-  </div>`;
-} else {
-  // Fetch PM Session Data — no range needed, TF- filter handles header rows
-  jsonp('PM Session Data',null,
-    tbl=>{
-      const allData=parsePM(tbl);
-      const myData=allData.filter(r=>r.pid===PID);
-
-      if(!myData.length){
-        document.getElementById('app').innerHTML=`<div class="loading">
-          <div style="font-size:28px;margin-bottom:12px">🔍</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:6px">No data for ${PID}</div>
-          <div style="color:#6B7280">Check the URL or ask your coach to confirm your ID.</div>
-        </div>`;
-        return;
+      // Data-entry quirk in early sessions (S002/S003): Session Note and
+      // Dev Priority text was entered into the Endurance/Recovery cells
+      // instead of their own columns, which sit empty for those rows.
+      if (isBlank(note) && typeof endurance === "string" && endurance.length > 8){
+        note = endurance;
+        priority = recovery;
+        endurance = null;
+        recovery = null;
       }
 
-      // Sort sessions chronologically
-      const sessions=[...new Map(myData.map(d=>[d.session,d])).values()]
-        .sort((a,b)=>a.session.localeCompare(b.session));
+      sessions.push({
+        session: row[COL.session],
+        date: parseSheetDate(row[COL.date]),
+        playerId: pid,
+        playerName: row[COL.playerName],
+        positionPlayed: row[COL.positionPlayed],
+        team: row[COL.team],
+        positionChange: row[COL.positionChange],
+        injuryFlag: row[COL.injuryFlag],
+        primaryPosition: row[COL.primaryPosition],
 
-      const player=sessions[sessions.length-1];
-      const name=player.name||PID;
-      const pos=player.position||'—';
-      const team=player.team||'';
+        touches: row[COL.touches], touchesPerMin: row[COL.touchesPerMin],
+        leftPct: row[COL.leftPct], rightPct: row[COL.rightPct],
+        bilateral: row[COL.bilateral], oneTouchPct: row[COL.oneTouchPct],
+        ctrlReleasePct: row[COL.ctrlReleasePct], maxRV: row[COL.maxRV],
+        rvAvg: row[COL.rvAvg], driftRatio: row[COL.driftRatio],
+        release1H: row[COL.release1H], release2H: row[COL.release2H],
+        crossFootPct: row[COL.crossFootPct],
 
-      // Build dropdown
-      const opts=sessions.map((s,i)=>`<option value="${s.session}" ${i===sessions.length-1?'selected':''}>
-        ${s.date||s.session} · ${s.position||pos} · ${s.session}${i===sessions.length-1?' (latest)':''}
-      </option>`).join('');
+        codIntelPct: row[COL.codIntelPct], dirAsymPct: row[COL.dirAsymPct],
+        tactEcoM: row[COL.tactEcoM],
+        scanning: row[COL.scanning], decisionSpeed: row[COL.decisionSpeed],
+        spatialPlay: row[COL.spatialPlay], positioning: row[COL.positioning],
+        iAvg: row[COL.iAvg],
 
-      // Render
-      const latestData=sessions[sessions.length-1];
-      const prevData=sessions.length>1?sessions[sessions.length-2]:null;
+        ballControl: row[COL.ballControl], passing: row[COL.passing],
+        receiving: row[COL.receiving], dribbling: row[COL.dribbling],
+        finishing: row[COL.finishing], bothFeet: row[COL.bothFeet],
+        tAvg: row[COL.tAvg],
 
-      document.getElementById('app').innerHTML=`
-        <div class="hdr">
-          <div class="hdr-top">
-            <div>
-              <div class="player-name">${name}</div>
-            </div>
-            <div class="brand">OPENFOOT</div>
-          </div>
-          <div class="hdr-tags">
-            <span class="tag pos">${pos}</span>
-            <span class="tag id">${PID}</span>
-            ${team?`<span class="tag">${team}</span>`:''}
-            <span class="tag">${sessions.length} session${sessions.length!==1?'s':''}</span>
-          </div>
-        </div>
-        <div class="sess-bar">
-          <div class="sess-label">Session history</div>
-          <select class="sess-select" id="sess-sel" onchange="switchSess(this.value)">${opts}</select>
-        </div>
-        <div id="sess-content">
-          ${renderSession(latestData,prevData?prevData.tips:null)}
-        </div>
-        <button class="gen-btn" onclick="window.print()">📄 Generate Report</button>
-      `;
+        totalDistM: row[COL.totalDistM], topSpeed: row[COL.topSpeed],
+        workRate: row[COL.workRate], hsc: row[COL.hsc], sprints: row[COL.sprints],
+        strideAsymPct: row[COL.strideAsymPct], gaitFlag: row[COL.gaitFlag],
+        gaitContext: row[COL.gaitContext],
+        speed: row[COL.speed], agility: row[COL.agility],
+        endurance: endurance, recovery: recovery, sAvg: row[COL.sAvg],
 
-      window._sessions=sessions;
-    },
-    err=>{
-      document.getElementById('app').innerHTML=`<div class="loading">
-        <div style="font-size:28px;margin-bottom:12px">⚠</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Could not load data</div>
-        <div style="color:#6B7280">Sheet may be loading. Try refreshing in 10 seconds.<br><small>${err.message}</small></div>
-      </div>`;
+        tipsScore: row[COL.tipsScore],
+        sessionNote: note,
+        devPriority: priority
+      });
+    });
+
+    return sessions;
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------------
+  function statChip(label, value){
+    return '<div class="stat-chip"><div class="lbl">' + esc(label) +
+      '</div><div class="val">' + esc(value) + '</div></div>';
+  }
+
+  function scoreChip(label, value){
+    var v = isNum(value) ? value : 0;
+    var pct = Math.max(0, Math.min(100, (v / 10) * 100));
+    return '<div class="score-chip">' +
+      '<div class="score-chip-row"><span class="n">' + esc(label) +
+      '</span><span class="v">' + n1(value) + '</span></div>' +
+      '<div class="score-bar"><div class="score-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>';
+  }
+
+  function tipsPillar(letter, value, name){
+    return '<div class="tips-pillar"><div class="letter ' + letter + '">' + letter +
+      '</div><div class="n">' + n1(value) + '</div><div class="name">' + esc(name) + '</div></div>';
+  }
+
+  function buildSessionCard(s, isOpen, index){
+    var flags = [];
+    if (!isBlank(s.injuryFlag) && ["—","NO"].indexOf(s.injuryFlag) === -1){
+      flags.push('<span class="flag-pill danger">' + esc(s.injuryFlag) + '</span>');
     }
-  );
-}
+    if (!isBlank(s.positionChange) && ["—","NO"].indexOf(s.positionChange) === -1){
+      flags.push('<span class="flag-pill warn">Pos change</span>');
+    }
 
-function switchSess(sessId){
-  const sessions=window._sessions||[];
-  const idx=sessions.findIndex(s=>s.session===sessId);
-  if(idx<0)return;
-  const cur=sessions[idx];
-  const prev=idx>0?sessions[idx-1]:null;
-  document.getElementById('sess-content').innerHTML=renderSession(cur,prev?prev.tips:null);
-}
+    var body =
+      '<div class="stat-section">' +
+        '<h4 class="stat-section-title">Ball Mastery</h4>' +
+        '<div class="stat-grid">' +
+          statChip("Touches", n0(s.touches)) +
+          statChip("Touches / min", n1(s.touchesPerMin)) +
+          statChip("Left / Right foot", (isNum(s.leftPct) ? n0(s.leftPct)+"%" : "—") + " / " + (isNum(s.rightPct) ? n0(s.rightPct)+"%" : "—")) +
+          statChip("One-Touch %", pct1(s.oneTouchPct)) +
+          statChip("Control on Release %", pct1(s.ctrlReleasePct)) +
+          statChip("Cross-Foot %", pct1(s.crossFootPct)) +
+          statChip("Max Release Velocity", isNum(s.maxRV) ? n1(s.maxRV)+" km/h" : "—") +
+          statChip("Bilateral Index", isNum(s.bilateral) ? s.bilateral.toFixed(3) : "—") +
+        '</div>' +
+      '</div>' +
+
+      '<div class="stat-section">' +
+        '<h4 class="stat-section-title">Decision Making <span class="pillar-avg">I AVG ' + n1(s.iAvg) + '</span></h4>' +
+        '<div class="stat-grid">' +
+          scoreChip("Scanning", s.scanning) +
+          scoreChip("Decision Speed", s.decisionSpeed) +
+          scoreChip("Spatial Play", s.spatialPlay) +
+          scoreChip("Positioning", s.positioning) +
+        '</div>' +
+        '<div class="stat-grid" style="margin-top:8px;">' +
+          statChip("Change-of-Direction Intel %", pct1(s.codIntelPct)) +
+          statChip("Directional Asymmetry %", pct1(s.dirAsymPct)) +
+          statChip("Tactical Economy", isNum(s.tactEcoM) ? n1(s.tactEcoM)+" m" : "—") +
+        '</div>' +
+      '</div>' +
+
+      '<div class="stat-section">' +
+        '<h4 class="stat-section-title">Technical <span class="pillar-avg">T AVG ' + n1(s.tAvg) + '</span></h4>' +
+        '<div class="stat-grid">' +
+          scoreChip("Ball Control", s.ballControl) +
+          scoreChip("Passing", s.passing) +
+          scoreChip("Receiving", s.receiving) +
+          scoreChip("Dribbling", s.dribbling) +
+          scoreChip("Finishing", s.finishing) +
+          scoreChip("Both Feet", s.bothFeet) +
+        '</div>' +
+      '</div>' +
+
+      '<div class="stat-section">' +
+        '<h4 class="stat-section-title">Physical <span class="pillar-avg">S AVG ' + n1(s.sAvg) + '</span></h4>' +
+        '<div class="stat-grid">' +
+          statChip("Total Distance", isNum(s.totalDistM) ? n0(s.totalDistM)+" m" : "—") +
+          statChip("Top Speed", isNum(s.topSpeed) ? n1(s.topSpeed)+" km/h" : "—") +
+          statChip("Work Rate", isNum(s.workRate) ? n1(s.workRate)+" m/min" : "—") +
+          statChip("High-Speed Count", n0(s.hsc)) +
+          statChip("Sprints", n0(s.sprints)) +
+          statChip("Stride Asymmetry %", pct1(s.strideAsymPct)) +
+        '</div>' +
+        '<div class="stat-grid" style="margin-top:8px;">' +
+          scoreChip("Speed", s.speed) +
+          scoreChip("Agility", s.agility) +
+          scoreChip("Endurance", s.endurance) +
+          scoreChip("Recovery", s.recovery) +
+        '</div>' +
+      '</div>' +
+
+      '<div class="stat-section">' +
+        '<h4 class="stat-section-title">TIPS</h4>' +
+        '<div class="tips-overview">' +
+          tipsPillar("T", s.tAvg, "Technique") +
+          tipsPillar("I", s.iAvg, "Insight") +
+          tipsPillar("S", s.sAvg, "Speed") +
+        '</div>' +
+        '<div class="radar-wrap"><canvas id="radar-' + index + '"></canvas></div>' +
+        '<div class="radar-legend">' +
+          '<span class="item"><span class="swatch" style="background:#3FFECA"></span>' + esc(s.playerName || "Player") + '</span>' +
+          '<span class="item"><span class="swatch" style="background:#8CA89A"></span>Session average</span>' +
+        '</div>' +
+      '</div>' +
+
+      (isBlank(s.sessionNote) ? "" :
+        '<div class="note-block"><span class="k">Session Note</span><p>' + esc(s.sessionNote) + '</p></div>') +
+      (isBlank(s.devPriority) ? "" :
+        '<div class="note-block priority"><span class="k">Dev Priority</span><p>' + esc(s.devPriority) + '</p></div>');
+
+    return (
+      '<div class="session-card" data-open="' + (isOpen ? "true" : "false") + '">' +
+        '<button class="session-head" type="button">' +
+          '<div class="session-head-main">' +
+            '<div class="session-head-top">' +
+              '<span>' + esc(formatDate(s.date)) + '</span>' +
+              '<span class="sep">·</span>' +
+              '<span>' + esc(s.positionPlayed || "—") + '</span>' +
+              '<span class="sep">·</span>' +
+              '<span>Team ' + esc(s.team || "—") + '</span>' +
+              (flags.length ? ' ' + flags.join(' ') : '') +
+            '</div>' +
+            '<div class="session-head-sub"><span>' + esc(s.session || "") + '</span></div>' +
+          '</div>' +
+          '<div class="session-score"><div class="v">' + n1(s.tipsScore) + '</div><div class="l">TIPS</div></div>' +
+          '<svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="session-body"><div class="session-body-inner">' + body + '</div></div>' +
+      '</div>'
+    );
+  }
+
+  function toggleCard(card){
+    var body = card.querySelector(".session-body");
+    var isOpen = card.getAttribute("data-open") === "true";
+    if (isOpen){
+      body.style.maxHeight = body.scrollHeight + "px";
+      requestAnimationFrame(function(){ body.style.maxHeight = "0px"; });
+      card.setAttribute("data-open", "false");
+    } else {
+      card.setAttribute("data-open", "true");
+      body.style.maxHeight = body.scrollHeight + "px";
+    }
+  }
+
+  function renderChart(sessionsAsc){
+    var ctx = document.getElementById("tipsChart").getContext("2d");
+    var labels = sessionsAsc.map(sessionLabel);
+
+    var datasets = [
+      { key: "tipsScore", label: "Overall", color: "#3FFECA", width: 3 },
+      { key: "tAvg", label: "T · Technique", color: "#8FC6FF", width: 2 },
+      { key: "iAvg", label: "I · Insight", color: "#C9A6FF", width: 2 },
+      { key: "sAvg", label: "S · Speed", color: "#FFC97A", width: 2 }
+    ];
+
+    var legend = document.getElementById("chartLegend");
+    legend.innerHTML = datasets.map(function(d){
+      return '<span class="item"><span class="swatch" style="background:' + d.color + '"></span>' + d.label + '</span>';
+    }).join("");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: datasets.map(function(d){
+          return {
+            label: d.label,
+            data: sessionsAsc.map(function(s){ return isNum(s[d.key]) ? s[d.key] : null; }),
+            borderColor: d.color,
+            backgroundColor: d.color,
+            borderWidth: d.width,
+            pointRadius: 3.5,
+            pointBackgroundColor: d.color,
+            pointBorderColor: "#07100A",
+            pointBorderWidth: 1.5,
+            tension: 0.3,
+            spanGaps: true
+          };
+        })
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: "#142519", titleColor: "#EAF7F1", bodyColor: "#EAF7F1",
+          borderColor: "rgba(63,254,202,.28)", borderWidth: 1, padding: 10, displayColors: true
+        }},
+        scales: {
+          y: {
+            min: 0, max: 10,
+            grid: { color: "rgba(63,254,202,.08)" },
+            ticks: { color: "#8CA89A", font: { size: 10 }, stepSize: 2 }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: "#8CA89A", font: { size: 10 }, maxRotation: 0, autoSkip: true }
+          }
+        }
+      }
+    });
+  }
+
+  // Per-session radar: this player's T/I/S for that session vs the average
+  // of every TF- player who trained in that same session (session cohort).
+  function renderSessionRadars(sessionsDesc, sessionAverages){
+    sessionsDesc.forEach(function(s, i){
+      var canvas = document.getElementById("radar-" + i);
+      if (!canvas || typeof Chart === "undefined") return;
+      var teamAvg = sessionAverages[s.session] || {};
+
+      new Chart(canvas.getContext("2d"), {
+        type: "radar",
+        data: {
+          labels: ["Technique", "Insight", "Speed"],
+          datasets: [
+            {
+              label: s.playerName || "Player",
+              data: [s.tAvg, s.iAvg, s.sAvg],
+              borderColor: "#3FFECA", backgroundColor: "rgba(63,254,202,.18)",
+              pointBackgroundColor: "#3FFECA", pointBorderColor: "#07100A",
+              borderWidth: 2, pointRadius: 3
+            },
+            {
+              label: "Session average" + (isNum(teamAvg.n) ? " (n=" + teamAvg.n + ")" : ""),
+              data: [teamAvg.tAvg, teamAvg.iAvg, teamAvg.sAvg],
+              borderColor: "#8CA89A", backgroundColor: "rgba(140,168,154,.10)",
+              pointBackgroundColor: "#8CA89A", pointBorderColor: "#07100A",
+              borderWidth: 1.5, borderDash: [4, 3], pointRadius: 2.5
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#142519", titleColor: "#EAF7F1", bodyColor: "#EAF7F1",
+              borderColor: "rgba(63,254,202,.28)", borderWidth: 1
+            }
+          },
+          scales: {
+            r: {
+              min: 0, max: 10,
+              ticks: { display: false, stepSize: 2, backdropColor: "transparent" },
+              grid: { color: "rgba(63,254,202,.12)" },
+              angleLines: { color: "rgba(63,254,202,.12)" },
+              pointLabels: { color: "#8CA89A", font: { size: 10.5 } }
+            }
+          }
+        }
+      });
+    });
+  }
+
+  // "Your Development" — dual-axis trend lines pairing an objective
+  // PlayerMaker sensor metric with its related coach-scored TIPS criterion.
+  // Gated behind a 2-session minimum so a single point never renders as a chart.
+  function renderDevSection(sessionsAsc){
+    var el = document.getElementById("devCard");
+
+    if (sessionsAsc.length < 2){
+      el.innerHTML =
+        '<div class="dev-empty">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '<p class="dev-empty-title">Development charts appear after session 2</p>' +
+          '<p class="dev-empty-sub">Every session adds a point to your charts. Two-footedness, ball control under pressure, and movement symmetry — tracked over time so you can see whether the work is showing.</p>' +
+          '<span class="dev-empty-progress">' + sessionsAsc.length + ' of 2 sessions logged</span>' +
+        '</div>';
+      return;
+    }
+
+    el.innerHTML =
+      '<div class="dev-metric">' +
+        '<div class="dev-metric-head"><span class="dev-metric-title">Two-Footedness</span><span class="dev-metric-sub">Weak-foot usage % · Both Feet score</span></div>' +
+        '<div class="chart-wrap small"><canvas id="dev-bilateral"></canvas></div>' +
+      '</div>' +
+      '<div class="dev-metric">' +
+        '<div class="dev-metric-head"><span class="dev-metric-title">Ball Control Under Pressure</span><span class="dev-metric-sub">Control on Release % · Ball Control score</span></div>' +
+        '<div class="chart-wrap small"><canvas id="dev-control"></canvas></div>' +
+      '</div>' +
+      '<div class="dev-metric">' +
+        '<div class="dev-metric-head"><span class="dev-metric-title">Movement Symmetry</span><span class="dev-metric-sub">Stride Asymmetry %</span></div>' +
+        '<div class="chart-wrap small"><canvas id="dev-gait"></canvas></div>' +
+      '</div>';
+
+    if (typeof Chart === "undefined") return;
+    var labels = sessionsAsc.map(sessionLabel);
+    var baseScales = function(leftMax, leftLabelIsPct){
+      return {
+        yLeft: {
+          position: "left", min: 0, max: leftMax,
+          grid: { color: "rgba(63,254,202,.08)" },
+          ticks: { color: "#8CA89A", font: { size: 9 }, callback: function(v){ return leftLabelIsPct ? v + "%" : v; } }
+        },
+        yRight: {
+          position: "right", min: 0, max: 10,
+          grid: { display: false },
+          ticks: { color: "#8CA89A", font: { size: 9 } }
+        },
+        x: { grid: { display: false }, ticks: { color: "#8CA89A", font: { size: 9 }, maxRotation: 0, autoSkip: true } }
+      };
+    };
+    var legendOpt = { display: true, position: "bottom", labels: { color: "#8CA89A", boxWidth: 9, font: { size: 9.5 }, padding: 10 } };
+    var tooltipOpt = {
+      backgroundColor: "#142519", titleColor: "#EAF7F1", bodyColor: "#EAF7F1",
+      borderColor: "rgba(63,254,202,.28)", borderWidth: 1
+    };
+
+    // 1. Two-footedness: weak-foot usage % vs Both Feet TIPS score
+    new Chart(document.getElementById("dev-bilateral").getContext("2d"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Weak-Foot Usage %", yAxisID: "yLeft",
+            data: sessionsAsc.map(function(s){ return (isNum(s.leftPct) && isNum(s.rightPct)) ? Math.min(s.leftPct, s.rightPct) : null; }),
+            borderColor: "#8FC6FF", backgroundColor: "#8FC6FF", pointRadius: 3, tension: 0.3, spanGaps: true
+          },
+          {
+            label: "Both Feet Score", yAxisID: "yRight",
+            data: sessionsAsc.map(function(s){ return isNum(s.bothFeet) ? s.bothFeet : null; }),
+            borderColor: "#3FFECA", backgroundColor: "#3FFECA", pointRadius: 3, tension: 0.3, spanGaps: true, borderDash: [5, 3]
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: legendOpt, tooltip: tooltipOpt },
+        scales: baseScales(50, true)
+      }
+    });
+
+    // 2. Ball control under pressure: Control on Release % vs Ball Control score
+    new Chart(document.getElementById("dev-control").getContext("2d"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Control on Release %", yAxisID: "yLeft",
+            data: sessionsAsc.map(function(s){ return isNum(s.ctrlReleasePct) ? s.ctrlReleasePct : null; }),
+            borderColor: "#C9A6FF", backgroundColor: "#C9A6FF", pointRadius: 3, tension: 0.3, spanGaps: true
+          },
+          {
+            label: "Ball Control Score", yAxisID: "yRight",
+            data: sessionsAsc.map(function(s){ return isNum(s.ballControl) ? s.ballControl : null; }),
+            borderColor: "#3FFECA", backgroundColor: "#3FFECA", pointRadius: 3, tension: 0.3, spanGaps: true, borderDash: [5, 3]
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: legendOpt, tooltip: tooltipOpt },
+        scales: baseScales(100, true)
+      }
+    });
+
+    // 3. Movement symmetry: Stride Asymmetry % (points highlighted red when Gait Flag = YES)
+    var strideVals = sessionsAsc.map(function(s){ return isNum(s.strideAsymPct) ? s.strideAsymPct : null; });
+    var flagged = sessionsAsc.map(function(s){ return s.gaitFlag === "YES"; });
+    new Chart(document.getElementById("dev-gait").getContext("2d"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Stride Asymmetry %",
+          data: strideVals,
+          borderColor: "#FFC97A", backgroundColor: "#FFC97A",
+          pointBackgroundColor: flagged.map(function(f){ return f ? "#FF6B6B" : "#FFC97A"; }),
+          pointRadius: flagged.map(function(f){ return f ? 5.5 : 3; }),
+          tension: 0.3, spanGaps: true
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: tooltipOpt },
+        scales: {
+          y: { beginAtZero: true, grid: { color: "rgba(63,254,202,.08)" }, ticks: { color: "#8CA89A", font: { size: 9 }, callback: function(v){ return v + "%"; } } },
+          x: { grid: { display: false }, ticks: { color: "#8CA89A", font: { size: 9 }, maxRotation: 0, autoSkip: true } }
+        }
+      }
+    });
+    if (flagged.some(Boolean)){
+      document.querySelector('#dev-gait').closest(".dev-metric").insertAdjacentHTML(
+        "beforeend", '<p class="dev-flag-note">Red points mark sessions with a gait flag.</p>'
+      );
+    }
+  }
+
+  function renderHeader(latest){
+    document.getElementById("playerHeader").style.display = "flex";
+    document.getElementById("avatarInitial").textContent = (latest.playerName || "?").charAt(0).toUpperCase();
+    document.getElementById("playerName").textContent = latest.playerName || latest.playerId;
+
+    var metaParts = [
+      '<span class="pid">' + esc(latest.playerId) + '</span>',
+      esc(latest.primaryPosition || latest.positionPlayed || "—"),
+      "Team " + esc(latest.team || "—")
+    ];
+    document.getElementById("playerMeta").innerHTML = metaParts.join(' <span class="sep">·</span> ');
+    document.getElementById("heroScore").textContent = n1(latest.tipsScore);
+  }
+
+  function render(sessions, allSessions){
+    document.getElementById("loadingState").style.display = "none";
+
+    if (!sessions.length){
+      var id = qs("id");
+      document.getElementById("emptyState").style.display = "block";
+      document.getElementById("emptyState").textContent = id
+        ? "No sessions found for " + id + "."
+        : "Add ?id=PLAYER-ID to the URL to view a player passport.";
+      return;
+    }
+
+    var sessionsDesc = sessions.slice().sort(function(a, b){
+      return (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0);
+    });
+    var sessionsAsc = sessions.slice().sort(function(a, b){
+      return (a.date ? a.date.getTime() : 0) - (b.date ? b.date.getTime() : 0);
+    });
+
+    renderHeader(sessionsDesc[0]);
+
+    document.getElementById("content").style.display = "block";
+    var listEl = document.getElementById("sessionList");
+    listEl.innerHTML = sessionsDesc.map(function(s, i){ return buildSessionCard(s, i === 0, i); }).join("");
+
+    var cards = listEl.querySelectorAll(".session-card");
+    cards.forEach(function(card, i){
+      var body = card.querySelector(".session-body");
+      if (i === 0){ body.style.maxHeight = body.scrollHeight + "px"; }
+      card.querySelector(".session-head").addEventListener("click", function(){ toggleCard(card); });
+    });
+
+    renderChart(sessionsAsc);
+    renderSessionRadars(sessionsDesc, computeSessionAverages(allSessions || sessions));
+    renderDevSection(sessionsAsc);
+  }
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  function init(){
+    var id = qs("id");
+    if (!id){
+      render([]);
+      return;
+    }
+    loadSheet(function(json){
+      var all = parseTable(json);
+      var matched = all.filter(function(s){
+        return s.playerId && s.playerId.toLowerCase() === id.toLowerCase();
+      });
+      render(matched, all);
+    }, function(){
+      document.getElementById("loadingState").style.display = "none";
+      var el = document.getElementById("emptyState");
+      el.style.display = "block";
+      el.textContent = "Could not load player data. Please try again shortly.";
+    });
+  }
+
+  init();
+})();
 </script>
 </body>
 </html>

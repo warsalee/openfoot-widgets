@@ -1188,12 +1188,10 @@
 
     document.getElementById("content").style.display = "block";
     var listEl = document.getElementById("sessionList");
-    listEl.innerHTML = sessionsDesc.map(function(s, i){ return buildSessionCard(s, i === 0, i); }).join("");
+    listEl.innerHTML = sessionsDesc.map(function(s, i){ return buildSessionCard(s, false, i); }).join("");
 
     var cards = listEl.querySelectorAll(".session-card");
     cards.forEach(function(card, i){
-      var body = card.querySelector(".session-body");
-      if (i === 0){ body.style.maxHeight = body.scrollHeight + "px"; }
       card.querySelector(".session-head").addEventListener("click", function(){ toggleCard(card); });
     });
 
